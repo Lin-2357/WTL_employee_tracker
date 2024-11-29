@@ -1,0 +1,205 @@
+@font-face {
+  font-family: "ColfaxAI";
+  src: url(https://cdn.openai.com/API/fonts/ColfaxAIRegular.woff2)
+      format("woff2"),
+    url(https://cdn.openai.com/API/fonts/ColfaxAIRegular.woff) format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "ColfaxAI";
+  src: url(https://cdn.openai.com/API/fonts/ColfaxAIBold.woff2) format("woff2"),
+    url(https://cdn.openai.com/API/fonts/ColfaxAIBold.woff) format("woff");
+  font-weight: bold;
+  font-style: normal;
+}
+.main,
+.main input {
+  font-size: 16px;
+  line-height: 24px;
+  color: #353740;
+  font-family: "ColfaxAI", Helvetica, sans-serif;
+}
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 60px;
+}
+.main .icon {
+  width: 34px;
+}
+.main h3 {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: bold;
+  color: #202123;
+  margin: 16px 0 40px;
+}
+.main form {
+  display: flex;
+  flex-direction: column;
+}
+.main input[type="text"] {
+  padding: 12px 16px;
+  border: 1px solid #10a37f;
+  border-radius: 4px;
+  margin: 10px;
+  outline-color: #10a37f;
+  width: 400px;
+}
+.main input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+}
+.main textarea {
+  font-size: 16px;
+  line-height: 22px;
+  color: #353740;
+  font-family: "ColfaxAI", Helvetica, sans-serif;
+  padding: 12px 16px;
+  border: 2px solid #10a37f;
+  border-radius: 4px;
+  outline-color: #10a37f;
+  height: 22px;
+}
+.main input[type="password"] {
+  padding: 12px 16px;
+  border: 1px solid #10a37f;
+  border-radius: 4px;
+  margin-bottom: 24px;
+  outline-color: #10a37f;
+}
+.main ::placeholder {
+  color: #8e8ea0;
+  opacity: 1;
+}
+.main input[type="submit"] {
+  padding: 12px 0;
+  color: #fff;
+  background-color: #10a37f;
+  border: none;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+}
+.main .result {
+  font-weight: bold;
+  margin-top: 40px;
+}
+
+.textout {
+  width: 90vw;
+}
+.txar {
+  display: flex;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 10px;
+  width: 800px;
+  min-height: 50px;
+  border: solid 2.5px #10a37f;
+  border-radius: 10%;
+}
+.txta {
+  width: 800px;
+  min-height: 50px;
+}
+.result {
+  width: 60%;
+}
+.popup {
+  width: 60%;
+  height: 80%;
+  position: absolute;
+  top: 10%;
+  left: 20%;
+  border-radius: 20px;
+  background-color: #cecece;
+  padding: 20px;
+  overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.loginbutton {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 20%;
+  background-color: #10a37f;
+  right: 0;
+  top: 5px;
+  cursor: pointer;
+  line-height: 50px;
+  color: #fff;
+  text-align: center;
+  font-size: 25px;
+}
+.login {
+  position: absolute;
+  margin: auto;
+  border-radius: 20px;
+  background-color: #dedede;
+  box-shadow: 5px 5px 20px #bebebe;
+  padding: 15px;
+  padding-bottom: 35px;
+  overflow-y: scroll;
+}
+.close {
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  background-color: #808080;
+  cursor: pointer;
+  border-radius: 50%;
+  top: 0px;
+  right: 0px;
+}
+.chatForm {
+  position: fixed;
+  bottom: 10px;
+  width: 80%;
+}
+.chatInput {
+  width: calc(100% - 125px);
+  margin-left: 0px;
+  resize: vertical;
+}
+.chatSend {
+  width: 75px;
+  position: absolute;
+  right: 0px;
+}
+.add {
+  margin-bottom: 20px;
+  background-color: #10a37f;
+  color: #fff;
+  border-radius: 5px;
+  width: 320px;
+  height: 50px;
+  text-align: center;
+  line-height: 50px;
+  cursor: pointer;
+}
+.headbar {
+  position: fixed;
+  top: 0;
+  width: 80%;
+  border-bottom: 2px solid #10a37f;
+}
+.titlebar {
+  margin: auto;
+  width: fit-content;
+  text-align: center;
+  padding: 13px;
+}
+.icon {
+  vertical-align: middle;
+}
+.textbox {
+  width: 600px;
+  margin-bottom: 20px;
+}
