@@ -9,7 +9,7 @@ import os
 from sqlalchemy.ext.automap import automap_base
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:3001"}}, allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
+CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 # SQLite database configuration

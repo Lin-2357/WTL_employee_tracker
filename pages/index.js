@@ -28,7 +28,7 @@ export default function Home() {
     const prt = animalInput;
     console.log(prt)
     try {
-      const response = await fetch("http://localhost:4000/generate", {
+      const response = await fetch("http://192.168.12.121:4000/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,7 +50,7 @@ export default function Home() {
           throw new Error("No token found. Please log in.");
         }
 
-        const dat = await fetch("http://localhost:8888/query", {
+        const dat = await fetch("http://192.168.12.121:8888/query", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -65,7 +65,7 @@ export default function Home() {
         }
 
         setResult("interpreting result...")
-        const interpretation = await fetch("http://localhost:4000/interpret", {
+        const interpretation = await fetch("http://192.168.12.121:4000/interpret", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -87,7 +87,7 @@ export default function Home() {
 
   async function populate() {
     try {
-      const interpretation = await fetch("http://localhost:4000/populate", {
+      const interpretation = await fetch("http://192.168.12.121:4000/populate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,7 +115,7 @@ export default function Home() {
           <form style={{width: '100%', position:'relative'}} onSubmit={async(e)=>{
             e.preventDefault()
             try {
-              const response = await fetch("http://localhost:8888/report", {
+              const response = await fetch("http://192.168.12.121:8888/report", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -203,7 +203,7 @@ export default function Home() {
 
   async function login(e) {
     e.preventDefault();
-    const response = await fetch('http://localhost:8888/login', {
+    const response = await fetch('http://192.168.12.121:8888/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username, password: password })
