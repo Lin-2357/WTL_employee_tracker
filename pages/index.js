@@ -10,7 +10,7 @@ export default function Home() {
 
   const [animalInput, setAnimalInput] = useState("");
   const [result, setResult] = useState("");
-  const [popup, setPopup] = useState(false);
+  const [popup, setPopup] = useState(true);
   const [inputPopup, setInputPopup] = useState(false);
   const [report, setReport] = useState("");
   const [is_reversed, setReversed] = useState([false]);
@@ -21,9 +21,14 @@ export default function Home() {
   const [instruction, setInstruction] = useState('describe what you have done this week!');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [session_id, setSessionID] = useState('');
 
   async function generate(event) {
     event.preventDefault();
+    if (!session_id) {
+      alert("please create session first.");
+      return
+    }
     setResult("creating queries...");
     const prt = animalInput;
     console.log(prt)
@@ -33,7 +38,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt: prt }),
+        body: JSON.stringify({ prompt: prt, session: session_id }),
       });
 
       const data = await response.json();
@@ -211,6 +216,7 @@ export default function Home() {
     const data = await response.json();
     if (response.ok) {
       sessionStorage.setItem('jwtToken', data.access_token);
+      await resetSession()
       setResult("Log in successful") // Return the JWT token
       setPopup(false)
     } else {
@@ -248,6 +254,25 @@ export default function Home() {
     }
   }
 
+  async function resetSession() {
+    const dat = await fetch('http://192.168.12.121:8888/create', {
+      method: 'GET',
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${sessionStorage.getItem('jwtToken')}`
+      }
+    });
+    if (dat.status !== 200) {
+      throw data.error || new Error(`Request failed with status ${dat.status}`);
+    }
+    const uuid = await dat.json();
+    console.log(uuid)
+    if (uuid.session_id) {
+      setSessionID(uuid.session_id);
+      setResult('New session created.')
+    }
+  }
+
   function getUsername() {
     const jwtToken = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
 
@@ -275,10 +300,20 @@ export default function Home() {
               setInputPopup(true);
             } else {
               alert("Please log in before you create report.")
+              setPopup(true);
             }
           }}>Create Report</div>
         </div>
         <form className={styles.chatForm} onSubmit={generate}>
+          <div className={styles.chatReset} onClick={
+            ()=>{
+              if (getUsername()) {
+                resetSession();
+              } else {
+                setPopup(true);
+              }
+            }
+          }>Reset</div>
           <input type="submit" value="Send" className={styles.chatSend}/>
           <textarea
             name="animal"

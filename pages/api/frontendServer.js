@@ -19,9 +19,19 @@ PORT = 4000;
 app.post('/generate', async (req, res) => {
   try {
     const generateInput = req.body.prompt; // Extract prompt from request body
+    const session = req.body.session;
 
     // Call the local function from mygenerate.js
-    const result = await myGenerate({ animal: generateInput });
+    const result = await fetch('http://localhost:8010/generate', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+          prompt: generateInput,
+          session_id: session
+      })
+  });
 
     // Send the result back to the client
     if (result['result']) {

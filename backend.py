@@ -7,6 +7,7 @@ import bcrypt
 import json
 import os
 from sqlalchemy.ext.automap import automap_base
+import requests
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
@@ -210,6 +211,18 @@ def execute_query():
     # Execute the query securely
     result = db.session.execute(text(full_query), {"employee_id": employee_id})
     return jsonify([row._asdict() for row in result])
+
+@app.route('/create', methods=['GET'])
+@jwt_required()
+def create_session():
+    user_identity = json.loads(get_jwt_identity())
+    employee_id = user_identity['employee_id']
+    session = requests.post(
+        'http://127.0.0.1:8010/create_session', 
+        headers={'Content-Type': 'application/json'}, 
+        json={"user_id": employee_id}
+    )
+    return session, 200
 
 if __name__ == '__main__':
     print("Tables in SQLAlchemy:", db.metadata.tables.keys())
