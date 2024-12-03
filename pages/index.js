@@ -42,10 +42,10 @@ export default function Home() {
       });
 
       const data = await response.json();
-      if (response.status !== 200) {
-        throw data.error || new Error(`Request failed with status ${response.status}`);
+      if (response.status === 400) {
+        alert("session expired, please reset your session.")
       }
-      if (true) {
+      else if (response.status === 200) {
         console.log(data.result)
         setResult("loading data...");
         
@@ -64,10 +64,19 @@ export default function Home() {
           body: JSON.stringify({ query: data.result }),
         });
 
-        const dat2 = await dat.json();
-        if (dat.status !== 200) {
-          throw data.error || new Error(`Request failed with status ${dat.status}`);
+        if (dat.status === 500) {
+          setResult("query execution unsuccessful.")
+          return
+        } else if (dat.status === 400) {
+          setResult("AI model failed to generate a query.")
+          return
+        } else if (dat.status === 401) {
+          setResult("Log in expired, please re-login.")
+          return
+        } else if (dat.status !== 200) {
+          throw dat.error || new Error(`Request failed with status ${dat.status}`);
         }
+        const dat2 = await dat.json();
 
         setResult("interpreting result...")
         const interpretation = await fetch("http://192.168.12.121:4000/interpret", {
@@ -219,8 +228,11 @@ export default function Home() {
       await resetSession()
       setResult("Log in successful") // Return the JWT token
       setPopup(false)
-    } else {
-      throw new Error(data.message);
+    } else if (response.status === 401) {
+      alert("invalid username or password. Please try again.")
+    }
+    else {
+        throw new Error(data.message);
     }
   }
 
@@ -263,7 +275,11 @@ export default function Home() {
       }
     });
     if (dat.status !== 200) {
-      throw data.error || new Error(`Request failed with status ${dat.status}`);
+      if (dat.status === 401) {
+        alert("Log in expired, please re-login.")
+      } else {
+        throw data.error || new Error(`Request failed with status ${dat.status}`);
+      }
     }
     const uuid = await dat.json();
     if (uuid.session_id) {

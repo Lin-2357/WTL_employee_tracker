@@ -37,7 +37,9 @@ app.post('/generate', async (req, res) => {
       const query = await result.json();
       console.log(query)
       res.json(query);
-    } else {
+    } else if (result.status === 400) {
+      res.status(400).json({error: "session expired"})
+    }else {
       res.status(500).json({ error: result.error });
     }
   } catch (error) {

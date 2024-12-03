@@ -107,9 +107,11 @@ def execute_query():
     user_identity = json.loads(get_jwt_identity())
     employee_id = user_identity['employee_id']
     role = user_identity['role']
-    
     # User's query
     user_query = request.json.get('query').replace("`", '')
+    if "SELECT" not in user_query:
+        return "query invalid", 400
+
     user_query = user_query[user_query.index('SELECT'):] if 'WITH' not in user_query else user_query[user_query.index('WITH') + 4]
 
     # Define base CTEs
@@ -209,8 +211,11 @@ def execute_query():
     print(text(full_query))
 
     # Execute the query securely
-    result = db.session.execute(text(full_query), {"employee_id": employee_id})
-    return jsonify([row._asdict() for row in result])
+    try: 
+        result = db.session.execute(text(full_query), {"employee_id": employee_id})
+        return jsonify([row._asdict() for row in result])
+    except Exception as _:
+        return "query execution failed", 500
 
 @app.route('/create', methods=['GET'])
 @jwt_required()
