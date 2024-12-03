@@ -33,7 +33,7 @@ export default function Home() {
     const prt = animalInput;
     console.log(prt)
     try {
-      const response = await fetch("http://192.168.12.121:4000/generate", {
+      var response = await fetch("http://192.168.12.121:4000/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,14 +41,27 @@ export default function Home() {
         body: JSON.stringify({ prompt: prt, session: session_id }),
       });
 
-      const data = await response.json();
+      var data = await response.json();
       if (response.status === 400) {
         alert("session expired, please reset your session.")
       }
-      else if (response.status === 200) {
-        console.log(data.result)
+      else if (response.status !== 200 || (!data.result.includes("SELECT"))) {
+        setResult("CHESS model failed, trying backup model...");
+        console.log(data)
+        response = await fetch("http://192.168.12.121:4000/backup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt: prt }),
+        });
+          
+        data = await response.json();
+        if (!data.result || (!data.result.includes("SELECT"))) {
+          setResult(data.result || "Query generation failed.")
+        }
+      } 
         setResult("loading data...");
-        
         const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
 
         if (!jwtToken) {
@@ -89,9 +102,7 @@ export default function Home() {
         const out = await interpretation.json()
         setResult(out.result);
 
-      } else {
-        setResult(data.result)
-      }
+      
     } catch(error) {
       // Consider implementing your own error handling logic here
       console.error(error);

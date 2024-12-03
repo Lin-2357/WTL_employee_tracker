@@ -16,6 +16,19 @@ app.use(function(req, res, next) {
 
 PORT = 4000;
 
+app.post('/backup', async (req, res) => {
+  try {
+    const generateInput = req.body.prompt; // Extract prompt from request body
+    const query = await myGenerate({animal: generateInput}); 
+    console.log(query)
+    res.json(query);
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/generate', async (req, res) => {
   try {
     const generateInput = req.body.prompt; // Extract prompt from request body
