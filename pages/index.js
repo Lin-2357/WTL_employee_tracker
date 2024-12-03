@@ -45,8 +45,8 @@ export default function Home() {
       if (response.status !== 200) {
         throw data.error || new Error(`Request failed with status ${response.status}`);
       }
-      if (data.result.substring(0, 4)=="SQL:") {
-        console.log(data.result.substring(4, data.result.length))
+      if (true) {
+        console.log(data.result)
         setResult("loading data...");
         
         const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
@@ -61,7 +61,7 @@ export default function Home() {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${jwtToken}` // Add the token to the Authorization header
           },
-          body: JSON.stringify({ query: data.result.substring(4, data.result.length) }),
+          body: JSON.stringify({ query: data.result }),
         });
 
         const dat2 = await dat.json();
@@ -266,7 +266,6 @@ export default function Home() {
       throw data.error || new Error(`Request failed with status ${dat.status}`);
     }
     const uuid = await dat.json();
-    console.log(uuid)
     if (uuid.session_id) {
       setSessionID(uuid.session_id);
       setResult('New session created.')

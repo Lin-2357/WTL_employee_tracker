@@ -32,10 +32,11 @@ app.post('/generate', async (req, res) => {
           session_id: session
       })
   });
-
     // Send the result back to the client
-    if (result['result']) {
-      res.json(result);
+    if (result.status === 200) {
+      const query = await result.json();
+      console.log(query)
+      res.json(query);
     } else {
       res.status(500).json({ error: result.error });
     }

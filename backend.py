@@ -221,7 +221,7 @@ def create_session():
         'http://127.0.0.1:8010/create_session', 
         headers={'Content-Type': 'application/json'}, 
         json={"user_id": employee_id}
-    )
+    ).text
     return session, 200
 
 if __name__ == '__main__':
