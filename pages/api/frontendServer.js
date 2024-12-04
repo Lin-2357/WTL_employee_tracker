@@ -3,6 +3,8 @@ const bodyParser = require('body-parser');
 const myGenerate = require('./mygenerate'); // Adjust path if necessary
 const myInterpret = require('./generate');
 const myPopulate = require('./generate2');
+require('dotenv').config();
+const IP = process.env.CHESS_IP_ADDRESS;
 
 const app = express();
 app.use(bodyParser.json());
@@ -35,7 +37,7 @@ app.post('/generate', async (req, res) => {
     const session = req.body.session;
 
     // Call the local function from mygenerate.js
-    const result = await fetch('http://localhost:8010/generate', {
+    const result = await fetch('http://'+IP+':8010/generate', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
