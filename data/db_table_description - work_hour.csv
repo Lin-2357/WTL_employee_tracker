@@ -6,3 +6,5 @@ is_standardized,is_standardized,Indicates if the work hour entry is standardized
 project_id,project_id,Foreign key referencing the uuid of the project table.,TEXT,Links the work hour entry to a specific project.
 employee_id,employee_id,Foreign key referencing the uuid of the employee table.,TEXT,Links the work hour entry to the employee who logged the hours.
 hour,work_hour,"The number of hours worked, with up to 10 digits total and 2 digits after the decimal point.","decimal(10,2)",Example: 8.00 for 8 hours worked.
+start_date,start_date,The start date of each work hour log,DATE,In the format of day/month/year
+end_date,end_date,The end date of each work hour log,DATE,In the format of day/month/year
