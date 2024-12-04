@@ -11,7 +11,7 @@ export default function Home() {
   const IP = process.env.NEXT_PUBLIC_IP_ADDRESS;
 
   const [animalInput, setAnimalInput] = useState("");
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState([]);
   const [popup, setPopup] = useState(true);
   const [inputPopup, setInputPopup] = useState(false);
   const [report, setReport] = useState("");
@@ -25,13 +25,28 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [session_id, setSessionID] = useState('');
 
+  function addResult(message, client=false) {
+    setResult((prevresult)=>{return [{message: message, client: client}, ...prevresult]})
+  }
+
+  function renderResult() {
+    console.log(result)
+    return result.map(
+      (v, i) => {
+        return <div key={i} style={{marginBottom: 15, padding: 10, marginLeft: (v.client ? 'auto': 0), width: '60%', backgroundColor: (v.client? "#10a37f" : "#bec0be"), borderRadius: '5px'}}>{v.message}</div>
+      }
+    )
+  }
+
   async function generate(event) {
     event.preventDefault();
+    addResult(animalInput, true);
+    addResult("Creating queries...")
     if (!session_id) {
       alert("please create session first.");
       return
     }
-    setResult("creating queries...");
+
     const prt = animalInput;
     console.log(prt)
     try {
@@ -48,7 +63,7 @@ export default function Home() {
         alert("session expired, please reset your session.")
       }
       else if (response.status !== 200 || (!data.result.includes("SELECT"))) {
-        setResult("CHESS model failed, trying backup model...");
+        addResult("CHESS model failed, trying backup model...");
         console.log(data)
         response = await fetch("http://"+IP+":4000/backup", {
           method: "POST",
@@ -60,10 +75,10 @@ export default function Home() {
           
         data = await response.json();
         if (!data.result || (!data.result.includes("SELECT"))) {
-          setResult(data.result || "Query generation failed.")
+          addResult(data.result || "Query generation failed.")
         }
       } 
-        setResult("loading data...");
+        addResult("loading data...");
         const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
 
         if (!jwtToken) {
@@ -80,20 +95,20 @@ export default function Home() {
         });
 
         if (dat.status === 500) {
-          setResult("query execution unsuccessful.")
+          addResult("query execution unsuccessful.")
           return
         } else if (dat.status === 400) {
-          setResult("AI model failed to generate a query.")
+          addResult("AI model failed to generate a query.")
           return
         } else if (dat.status === 401) {
-          setResult("Log in expired, please re-login.")
+          addResult("Log in expired, please re-login.")
           return
         } else if (dat.status !== 200) {
           throw dat.error || new Error(`Request failed with status ${dat.status}`);
         }
         const dat2 = await dat.json();
 
-        setResult("interpreting result...")
+        addResult("interpreting result...")
         const interpretation = await fetch("http://"+IP+":4000/interpret", {
           method: "POST",
           headers: {
@@ -102,7 +117,7 @@ export default function Home() {
           body: JSON.stringify({ prompt: prt, response: displayObj(dat2) }),
         });
         const out = await interpretation.json()
-        setResult(out.result);
+        addResult(out.result);
 
       
     } catch(error) {
@@ -239,7 +254,7 @@ export default function Home() {
     if (response.ok) {
       sessionStorage.setItem('jwtToken', data.access_token);
       await resetSession()
-      setResult("Log in successful") // Return the JWT token
+      addResult("Log in successful") // Return the JWT token
       setPopup(false)
     } else if (response.status === 401) {
       alert("invalid username or password. Please try again.")
@@ -297,7 +312,7 @@ export default function Home() {
     const uuid = await dat.json();
     if (uuid.session_id) {
       setSessionID(uuid.session_id);
-      setResult('New session created.')
+      setResult([{message: "New session created.", client: false}])
     }
   }
 
@@ -332,6 +347,8 @@ export default function Home() {
             }
           }}>Create Report</div>
         </div>
+        <div className={styles.result}>{renderResult()}</div>
+
         <form className={styles.chatForm} onSubmit={generate}>
           <div className={styles.chatReset} onClick={
             ()=>{
@@ -361,7 +378,6 @@ export default function Home() {
         </form>
         {renderpop()}
         {renderLogin()}
-        <div className={styles.result}>{result}</div>
 
       </main>
       
