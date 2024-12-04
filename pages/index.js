@@ -8,6 +8,8 @@ function displayObj(obj) {
 
 export default function Home() {
 
+  const IP = process.env.NEXT_PUBLIC_IP_ADDRESS;
+
   const [animalInput, setAnimalInput] = useState("");
   const [result, setResult] = useState("");
   const [popup, setPopup] = useState(true);
@@ -33,7 +35,7 @@ export default function Home() {
     const prt = animalInput;
     console.log(prt)
     try {
-      var response = await fetch("http://192.168.12.121:4000/generate", {
+      var response = await fetch("http://"+IP+":4000/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,7 +50,7 @@ export default function Home() {
       else if (response.status !== 200 || (!data.result.includes("SELECT"))) {
         setResult("CHESS model failed, trying backup model...");
         console.log(data)
-        response = await fetch("http://192.168.12.121:4000/backup", {
+        response = await fetch("http://"+IP+":4000/backup", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -68,7 +70,7 @@ export default function Home() {
           throw new Error("No token found. Please log in.");
         }
 
-        const dat = await fetch("http://192.168.12.121:8888/query", {
+        const dat = await fetch("http://"+IP+":8888/query", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -92,7 +94,7 @@ export default function Home() {
         const dat2 = await dat.json();
 
         setResult("interpreting result...")
-        const interpretation = await fetch("http://192.168.12.121:4000/interpret", {
+        const interpretation = await fetch("http://"+IP+":4000/interpret", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -112,7 +114,7 @@ export default function Home() {
 
   async function populate() {
     try {
-      const interpretation = await fetch("http://192.168.12.121:4000/populate", {
+      const interpretation = await fetch("http://"+IP+":4000/populate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -140,7 +142,7 @@ export default function Home() {
           <form style={{width: '100%', position:'relative'}} onSubmit={async(e)=>{
             e.preventDefault()
             try {
-              const response = await fetch("http://192.168.12.121:8888/report", {
+              const response = await fetch("http://"+IP+":8888/report", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -228,7 +230,7 @@ export default function Home() {
 
   async function login(e) {
     e.preventDefault();
-    const response = await fetch('http://192.168.12.121:8888/login', {
+    const response = await fetch('http://'+IP+':8888/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username, password: password })
@@ -278,7 +280,7 @@ export default function Home() {
   }
 
   async function resetSession() {
-    const dat = await fetch('http://192.168.12.121:8888/create', {
+    const dat = await fetch('http://'+IP+':8888/create', {
       method: 'GET',
       headers: {
         "Content-Type": "application/json",
