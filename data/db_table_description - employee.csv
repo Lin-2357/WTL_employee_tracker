@@ -5,3 +5,4 @@ department,department_name,The department the employee belongs to.,varchar(255),
 alias,employee_alias,Employee's alias or alternative name.,varchar(255),"Optional alias, could be a nickname or simplified name."
 position,job_position,The employee's job title or position.,text,"Specific titles such as AI Engineer, 出纳, HRBP, etc."
 subdepartment,sub-department,Subdivision within the department (if applicable).,varchar(255),"Optional, indicates further categorization of a department (e.g. 方案设计1组, 装饰深化组, 机电组, etc.)."
+salary,salary,salary amount of each employee,INTEGER,salary amount of each employee
