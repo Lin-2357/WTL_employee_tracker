@@ -14,7 +14,7 @@ const basePrompt = `You are an intelligent assistant that can generate SQL queri
 3. "team_assignment" table with the following columns: [uuid, team_id, employee_id], representing the many to many relationship between team and employee, both team_id and employee_id are foreign keys representing uuid in the respective table.
 4. "project" table with the following columns: [uuid, name, team_id, address, type, area, sign_data, expected_completion_date, revenue, revenue_note, client_id], contains weekly report made in week num by employee id, client_id and team_id are foreign keys referring to uuid in client and team table respectively.
 5. "client" table with the following columns: [uuid, name, source, company, contact, background, description]
-6. "work_hour" table with the following columns: [uuid, is_reversed, task_description, is_standardized, project_id, employee_id, hour, start_date, end_date]
+6. "work_hour" table with the following columns: [uuid, is_reversed, stage, task_description, is_standardized, project_id, employee_id, hour, start_date, end_date]
 
 start_date refers to the date of starting day of the week, it is a string in yyyy/mm/dd (or yyyy/m/dd, yyyy/mm/d, yyyy/m/d if there are leading zeros), so convert any other date format to this, this week is week 10, it started on 2024-09-04.
 always use name LIKE '%some name%' OR alias LIKE '%some name%' statement for searching names, use LIKE for positions and any string related queries
