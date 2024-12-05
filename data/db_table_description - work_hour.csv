@@ -1,4 +1,4 @@
-original_column_name,column_name,column_description,data_format,value_description
+﻿original_column_name,column_name,column_description,data_format,value_description
 uuid,uuid,"Unique identifier for each work hour entry, serves as primary key of this table, cannot be NULL.",TEXT,A universally unique identifier (UUID) to distinguish each record.
 is_reversed,is_reworked,Indicates if the work is reworked.,tinyINTEGER,"0: Not reversed (default), 1: Reversed."
 task_description,task_description,Description of the task associated with the work hour entry.,TEXT,Free-text description detailing the task performed.
@@ -8,4 +8,4 @@ employee_id,employee_id,Foreign key referencing the uuid of the employee table.,
 hour,work_hour,"The number of hours worked, with up to 10 digits total and 2 digits after the decimal point.","decimal(10,2)",Example: 8.00 for 8 hours worked.
 start_date,start_date,The start date of each work hour log,DATE,In the format of day/month/year
 end_date,end_date,The end date of each work hour log,DATE,In the format of day/month/year
-stage,stage,measures what stage the personnel is working on the project,TEXT,consists of number.description such as 1.design stage
+stage,project_stage,"Represents the stage of the project when the employee is working on it, can be subject to change by time and by project itself. Can be NULL.",TEXT,"Includes 1. 投标阶段, 2. 设计阶段, 3. 施工阶段, 4. 竣工阶段, 5. 售后阶段."
