@@ -14,9 +14,8 @@ export default function Home() {
   const [result, setResult] = useState([]);
   const [popup, setPopup] = useState(true);
   const [inputPopup, setInputPopup] = useState(false);
-  const [report, setReport] = useState("");
   const [is_reversed, setReversed] = useState([false]);
-  const [is_standardized, setStandardized] = useState([false]);
+  const [is_standardized, setStandardized] = useState([true]);
   const [project, setProject] = useState([""]);
   const [hours, setHours] = useState([""]);
   const [keywords, setKeywords] = useState([""]);
@@ -24,13 +23,13 @@ export default function Home() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [session_id, setSessionID] = useState('');
+  const [stage, setStage] = useState([''])
 
   function addResult(message, client=false) {
     setResult((prevresult)=>{return [{message: message, client: client}, ...prevresult]})
   }
 
   function renderResult() {
-    console.log(result)
     return result.map(
       (v, i) => {
         return <div key={i} style={{marginBottom: 15, padding: 10, marginLeft: (v.client ? 'auto': 0), width: '60%', backgroundColor: (v.client? "#10a37f" : "#bec0be"), borderRadius: '5px'}}>{v.message}</div>
@@ -59,12 +58,13 @@ export default function Home() {
       });
 
       var data = await response.json();
+      console.log(data)
+
       if (response.status === 400) {
         alert("session expired, please reset your session.")
       }
-      else if (response.status !== 200 || (!data.result.includes("SELECT"))) {
+      else if (response.status !== 200 || (!data.result.sql_query.includes("SELECT"))) {
         addResult("CHESS model failed, trying backup model...");
-        console.log(data)
         response = await fetch("http://"+IP+":4000/backup", {
           method: "POST",
           headers: {
@@ -77,7 +77,9 @@ export default function Home() {
         if (!data.result || (!data.result.includes("SELECT"))) {
           addResult(data.result || "Query generation failed.")
         }
-      } 
+      } else {
+        data = {result: data.result.sql_query}
+      }
         addResult("loading data...");
         const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
 
@@ -127,25 +129,31 @@ export default function Home() {
     }
   }
 
-  async function populate() {
+  async function populate(i) {
     try {
-      const interpretation = await fetch("http://"+IP+":4000/populate", {
+      const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
+
+      const interpretation = await fetch("http://"+IP+":8888/query", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${jwtToken}`
         },
-        body: JSON.stringify({ prompt: report }),
+        body: JSON.stringify({ query: "SELECT team.name AS id, project.name as name from team JOIN project ON team.uuid = project.team_id WHERE project.name LIKE '%"+project[i]+"%';" }),
       });
       const out = await interpretation.json()
       console.log(out)
-      if (parseInt(out.hours) >= 0) {
-        setHours(parseInt(out.hours));
+      
+      if (out.length > 0) {
+        if (out.length === 1) {
+          setInstruction("Project found")
+          setProject([...project.slice(0, i), out[0].id, ...project.slice(i+1)])
+        } else {
+          setInstruction("Multiple projects found: "+JSON.stringify(out))
+        }
+      } else {
+        setInstruction("No projects found")
       }
-      if (parseInt(out.sale) >= 0) {
-        setSale(parseInt(out.sale));
-      }
-      setKeywords(out.keywords);
-      setInstruction(out.instruction);
     } catch (error) {
       console.error(error.message)
     }
@@ -180,16 +188,16 @@ export default function Home() {
           }}>
             <h3>Generate Weekly Report</h3>
             <p>{instruction}</p>
-            <textarea className={styles.textbox} value={report} onChange={(e)=>{setReport(e.target.value)}} placeholder="type your report here, include sales value and hours."></textarea>
-            <div className={styles.add} style={{marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}} onClick={()=>{populate()}}>Populate your statistics with AI</div>
+            {/*<textarea className={styles.textbox} style={{width: '95%'}} value={report} onChange={(e)=>{setReport(e.target.value)}} placeholder="type your report in text here, and click the green button to let AI fill in statistics for you."></textarea>
+            <div className={styles.add} style={{marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}} onClick={()=>{populate()}}>Populate your statistics with AI</div>*/}
             {renderReport()}
             <div className={styles.add} onClick={ ()=>{
               setHours([...hours, ""])
               setProject([...project, ''])
               setReversed([...is_reversed, false])
-              setStandardized([...is_standardized, false])
+              setStandardized([...is_standardized, true])
               setKeywords([...keywords, ""])
-              console.log(project)
+              setStage([...stage, ''])
             }
             }>Add another report</div>
             <div className={styles.close} onClick={()=>{setPopup(false);setInstruction('describe what you have done this week!');}}></div>
@@ -200,19 +208,19 @@ export default function Home() {
   }
 
   function renderReport() {
-    console.log(project)
     return project.map( (v,i)=> (
       <div style={{border: '2px solid #353740', marginBottom: 10, borderRadius: 10}}>
       <input
       type="text"
       name="project"
-      placeholder="Enter the project ID or name of the project you are working on"
+      placeholder="Enter the project ID, or a name that can locate it."
       value={v}
       onChange={(e) => {
         setProject([...project.slice(0, i), e.target.value, ...project.slice(i+1)])
       }}></input>
-      Is your work reversed? <input type="checkbox" value={is_reversed[i]} onChange={(e)=>{setReversed([...is_reversed.slice(0, i), e.target.value, ...is_reversed.slice(i+1)])}}></input>
-      Is your work standardized? <input type="checkbox" value={is_standardized[i]} onChange={(e)=>{setStandardized([...is_standardized.slice(0, i), e.target.value, ...is_standardized.slice(i+1)])}}></input>
+      <div className={styles.add} style={{marginBottom: 10, marginLeft: 10, backgroundColor: '#10a37f'}} onClick={
+        ()=>{populate(i)}
+      }>Search for ID</div>
       <input
       type="text"
       name="hours"
@@ -229,6 +237,17 @@ export default function Home() {
       onChange={(e) => {
         setKeywords([...keywords.slice(0, i), e.target.value, ...keywords.slice(i+1)])
       }}></input>
+      <input
+      type="text"
+      name="stage"
+      placeholder="Enter the stage of your project."
+      value={stage[i]}
+      onChange={(e) => {
+        setStage([...stage.slice(0, i), e.target.value, ...stage.slice(i+1)])
+      }}></input>
+      Is your work reversed? <input type="checkbox" value={is_reversed[i]} onChange={(e)=>{setReversed([...is_reversed.slice(0, i), e.target.value, ...is_reversed.slice(i+1)])}}></input>
+      Is your work standardized? <input type="checkbox" value={is_standardized[i]} onChange={(e)=>{setStandardized([...is_standardized.slice(0, i), e.target.value, ...is_standardized.slice(i+1)])}}></input>
+      
       <div className={styles.add} style={{marginBottom: 10, marginLeft: 10, backgroundColor: '#808080'}} onClick={
         () => {
           setHours([...hours.slice(0, i), ...hours.slice(i+1)])
@@ -236,6 +255,7 @@ export default function Home() {
           setReversed([...is_reversed.slice(0, i), ...is_reversed.slice(i+1)])
           setStandardized([...is_standardized.slice(0, i), ...is_standardized.slice(i+1)])
           setKeywords([...keywords.slice(0, i), ...keywords.slice(i+1)])
+          setStage([...stage.slice(0, i), ...stage.slice(i+1)])          
         }
       }>Remove this report</div>
       </div>

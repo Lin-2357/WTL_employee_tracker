@@ -112,7 +112,7 @@ def execute_query():
     if "SELECT" not in user_query:
         return "query invalid", 400
 
-    user_query = user_query[user_query.index('SELECT'):] if 'WITH' not in user_query else user_query[user_query.index('WITH') + 4]
+    user_query = user_query[user_query.index('SELECT'):] if 'WITH' not in user_query else (","+user_query[user_query.index('WITH') + 4: ])
 
     # Define base CTEs
     query_masks = {
