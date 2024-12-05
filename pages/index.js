@@ -63,7 +63,7 @@ export default function Home() {
       if (response.status === 400) {
         alert("session expired, please reset your session.")
       }
-      else if (response.status !== 200 || (!data.result.sql_query.includes("SELECT"))) {
+      else if (response.status !== 200 || (!data.result.sql_query) || (!data.result.sql_query.includes("SELECT"))) {
         addResult("CHESS model failed, trying backup model...");
         response = await fetch("http://"+IP+":4000/backup", {
           method: "POST",
@@ -109,6 +109,7 @@ export default function Home() {
           throw dat.error || new Error(`Request failed with status ${dat.status}`);
         }
         const dat2 = await dat.json();
+        console.log(dat2)
 
         addResult("interpreting result...")
         const interpretation = await fetch("http://"+IP+":4000/interpret", {
