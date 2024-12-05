@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, JWTManager
-from sqlalchemy import text
+from sqlalchemy import text, Date
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import bcrypt
@@ -8,6 +8,8 @@ import json
 import os
 from sqlalchemy.ext.automap import automap_base
 import requests
+import uuid
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
@@ -62,6 +64,8 @@ class WorkHour(db.Model):
     project_id = db.Column(db.String(36), db.ForeignKey('project.uuid'), nullable=True)
     employee_id = db.Column(db.String(36), db.ForeignKey('employee.uuid'), nullable=True)
     hour = db.Column(db.Numeric(10, 2), nullable=True)
+    start_date = db.Column(Date, nullable=True)
+    end_date = db.Column(Date, nullable=True)
 
 class Team(db.Model):
     __tablename__ = 'team'
@@ -84,38 +88,7 @@ class Client(db.Model):
     background = db.Column(db.Text, nullable=True)
     description = db.Column(db.Text, nullable=True)
 
-    
-@app.before_request
-def enable_foreign_keys():
-    db.session.execute(text('PRAGMA foreign_keys=ON'))
-
-
-# Login route
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json
-    user = Users.query.filter_by(username=data['username']).first()
-    if user and bcrypt.checkpw(data['password'].encode('utf-8'), user.password_hash.encode('utf-8')):
-        identity = json.dumps({'employee_id': str(user.employee_id), 'role': str(user.role)})
-        access_token = create_access_token(identity=identity)
-        return jsonify({'access_token': access_token}), 200
-    return jsonify({'message': 'Invalid credentials'}), 401
-
-@app.route('/query', methods=['POST'])
-@jwt_required()
-def execute_query():
-    user_identity = json.loads(get_jwt_identity())
-    employee_id = user_identity['employee_id']
-    role = user_identity['role']
-    # User's query
-    user_query = request.json.get('query').replace("`", '')
-    if "SELECT" not in user_query:
-        return "query invalid", 400
-
-    user_query = user_query[user_query.index('SELECT'):] if 'WITH' not in user_query else (","+user_query[user_query.index('WITH') + 4: ])
-
-    # Define base CTEs
-    query_masks = {
+query_masks = {
         "level_1": """
         WITH 
         employee AS (
@@ -205,6 +178,35 @@ def execute_query():
         """,
         "level_4": """WITH _ AS (SELECT 1)"""  # Admin sees all
     }
+    
+@app.before_request
+def enable_foreign_keys():
+    db.session.execute(text('PRAGMA foreign_keys=ON'))
+
+
+# Login route
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    user = Users.query.filter_by(username=data['username']).first()
+    if user and bcrypt.checkpw(data['password'].encode('utf-8'), user.password_hash.encode('utf-8')):
+        identity = json.dumps({'employee_id': str(user.employee_id), 'role': str(user.role)})
+        access_token = create_access_token(identity=identity)
+        return jsonify({'access_token': access_token}), 200
+    return jsonify({'message': 'Invalid credentials'}), 401
+
+@app.route('/query', methods=['POST'])
+@jwt_required()
+def execute_query():
+    user_identity = json.loads(get_jwt_identity())
+    employee_id = user_identity['employee_id']
+    role = user_identity['role']
+    # User's query
+    user_query = request.json.get('query').replace("`", '')
+    if "SELECT" not in user_query:
+        return "query invalid", 400
+
+    user_query = user_query[user_query.index('SELECT'):] if 'WITH' not in user_query else (","+user_query[user_query.index('WITH') + 4: ])
 
     # Dynamically build the CTE query
     full_query = f"{query_masks[role]} {user_query}"
@@ -228,6 +230,63 @@ def create_session():
         json={"user_id": employee_id}
     ).text
     return session, 200
+
+@app.route('/populate', methods=['POST'])
+@jwt_required()
+def populate_ID():
+    user_identity = json.loads(get_jwt_identity())
+    employee_id = user_identity['employee_id']
+    role = user_identity['role']
+    # User's query
+    project_name = request.json.get('name')
+
+    user_query = "SELECT team.name AS id, project.name as name from team JOIN project ON team.uuid = project.team_id WHERE project.name LIKE :given_name"
+
+    # Dynamically build the CTE query
+    full_query = f"{query_masks[role]} {user_query}"
+    # Execute the query securely
+    try: 
+        result = db.session.execute(text(full_query), {"employee_id": employee_id, "given_name": "%"+project_name+"%"})
+        return jsonify([row._asdict() for row in result])
+    except Exception as _:
+        return "query execution failed", 500
+
+@app.route('/report', methods=['POST'])
+@jwt_required()
+def add_report():
+    user_identity = json.loads(get_jwt_identity())
+    employee_id = user_identity['employee_id']
+    role = user_identity['role']
+    # User's query
+    project_rep = request.json.get("Array_input")
+    for i in range(len(project_rep)):
+        project_rep[i]['employee_id'] = employee_id
+        project_rep[i]['end_date'] = datetime.today()
+        project_rep[i]['start_date'] = datetime.today() - timedelta(days=7)
+        project_rep[i]['hour'] = float(project_rep[i]['hour'])
+        project_rep[i]['uuid'] = str(uuid.uuid4())
+        try:
+            project_uuid = str(db.session.execute(text("SELECT project.uuid AS uuid FROM project JOIN team ON project.team_id = team.uuid WHERE team.name = :id"), {"id": project_rep[i]['project_id']}).first()[0])
+            print(project_uuid)
+            project_rep[i]['project_id'] = project_uuid
+        except Exception as e:
+            print(e)
+            return "invalid project id", 500
+
+    user_query = """INSERT INTO work_hour (uuid, employee_id, project_id, start_date, end_date, is_reversed, is_standardized, task_description, hour)
+    VALUES (:uuid, :employee_id, :project_id, :start_date, :end_date, :is_reversed, :is_standardized, :description, :hour)"""
+
+    # Dynamically build the CTE query
+    full_query = f"{user_query}"
+    # Execute the query securely
+    try:
+        for x in project_rep:
+            db.session.execute(text(full_query), x)
+        db.session.commit()
+        return {"ok":True}, 200
+    except Exception as _:
+        print(_)
+        return "submission failed", 500
 
 if __name__ == '__main__':
     print("Tables in SQLAlchemy:", db.metadata.tables.keys())

@@ -133,13 +133,13 @@ export default function Home() {
     try {
       const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
 
-      const interpretation = await fetch("http://"+IP+":8888/query", {
+      const interpretation = await fetch("http://"+IP+":8888/populate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${jwtToken}`
         },
-        body: JSON.stringify({ query: "SELECT team.name AS id, project.name as name from team JOIN project ON team.uuid = project.team_id WHERE project.name LIKE '%"+project[i]+"%';" }),
+        body: JSON.stringify({ name: project[i] }),
       });
       const out = await interpretation.json()
       console.log(out)
@@ -165,12 +165,18 @@ export default function Home() {
           <form style={{width: '100%', position:'relative'}} onSubmit={async(e)=>{
             e.preventDefault()
             try {
+              const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
+              const arr = [];
+              for (var i=0; i<project.length; i++) {
+                arr.push({project_id: project[i], hour: hours[i], is_standardized: is_standardized[i], is_reversed: is_reversed[i], description: keywords[i]})
+              }
               const response = await fetch("http://"+IP+":8888/report", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
+                  "Authorization": `Bearer ${jwtToken}`
                 },
-                body: JSON.stringify({ query: report, sale: sale, hours: hours, keywords: keywords }) // Example payload
+                body: JSON.stringify({ Array_input: arr }) // Example payload
               });
             
               if (!response.ok) {
@@ -200,7 +206,7 @@ export default function Home() {
               setStage([...stage, ''])
             }
             }>Add another report</div>
-            <div className={styles.close} onClick={()=>{setPopup(false);setInstruction('describe what you have done this week!');}}></div>
+            <div className={styles.close} onClick={()=>{setInputPopup(false);setInstruction('describe what you have done this week!');}}></div>
             <input type="submit" value="Submit report" />
           </form>
       </div>)
@@ -245,8 +251,8 @@ export default function Home() {
       onChange={(e) => {
         setStage([...stage.slice(0, i), e.target.value, ...stage.slice(i+1)])
       }}></input>
-      Is your work reversed? <input type="checkbox" value={is_reversed[i]} onChange={(e)=>{setReversed([...is_reversed.slice(0, i), e.target.value, ...is_reversed.slice(i+1)])}}></input>
-      Is your work standardized? <input type="checkbox" value={is_standardized[i]} onChange={(e)=>{setStandardized([...is_standardized.slice(0, i), e.target.value, ...is_standardized.slice(i+1)])}}></input>
+      Is your work reversed? <input type="checkbox" value={is_reversed[i]} onChange={(e)=>{setReversed([...is_reversed.slice(0, i), e.target.checked , ...is_reversed.slice(i+1)])}}></input>
+      Is your work standardized? <input type="checkbox" value={is_standardized[i]} onChange={(e)=>{setStandardized([...is_standardized.slice(0, i), e.target.checked , ...is_standardized.slice(i+1)])}}></input>
       
       <div className={styles.add} style={{marginBottom: 10, marginLeft: 10, backgroundColor: '#808080'}} onClick={
         () => {
