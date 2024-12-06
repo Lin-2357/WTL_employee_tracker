@@ -46,9 +46,35 @@ export default function Home() {
       return
     }
 
-    const prt = animalInput;
-    console.log(prt)
+    var prt = animalInput;
+    console.log(prt);
+    const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
+    if (!jwtToken) {
+      throw new Error("No token found. Please log in.");
+    }
+
     try {
+
+      const from = await fetch("http://"+IP+":8888/validate", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${jwtToken}` // Add the token to the Authorization header
+        },
+      });
+      if (from.status !== 200) {
+        addResult("Log in expired, please re-login.")
+        return
+      }
+      const from_id = await from.json();
+
+      if (!from_id.id) {
+        addResult("Log in expired, please re-login.")
+        return
+      }
+
+      prt = prt+"\n this question is made by employee ID: "+from_id.id
+
       var response = await fetch("http://"+IP+":4000/generate", {
         method: "POST",
         headers: {
@@ -62,6 +88,7 @@ export default function Home() {
 
       if (response.status === 400) {
         alert("session expired, please reset your session.")
+        return
       }
       else if (response.status !== 200 || (!data.result.sql_query) || (!data.result.sql_query.includes("SELECT"))) {
         addResult("CHESS model failed, trying backup model...");
@@ -81,11 +108,6 @@ export default function Home() {
         data = {result: data.result.sql_query}
       }
         addResult("loading data...");
-        const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
-
-        if (!jwtToken) {
-          throw new Error("No token found. Please log in.");
-        }
 
         const dat = await fetch("http://"+IP+":8888/query", {
           method: "POST",
