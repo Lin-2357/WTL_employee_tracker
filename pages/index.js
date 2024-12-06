@@ -80,7 +80,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt: prt, session: session_id }),
+        body: JSON.stringify({ prompt: prt, session: session_id, user_id: from_id.id }),
       });
 
       var data = await response.json();
