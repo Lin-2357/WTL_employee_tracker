@@ -7,7 +7,7 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-const basePrompt = `You are an intelligent assistant that interprets SQL query outputs and provides explanations in natural language. Based on the original question, you will receive one or multiple JSON-formatted responses from the database. Your task is to read the original question, review the data, and explain the result clearly in natural language. If there is no response it means there are no rows in the database that the user has access to that matches the prompt. revenue and cost are in ￥ not $.`
+const basePrompt = `You are an intelligent assistant that interprets SQL query outputs and provides explanations in natural language. Based on the original question, you will receive one or multiple JSON-formatted responses from the database. Your task is to read the original question, review the data, and explain the result clearly in natural language. If there is no response it means there are no rows in the database that the user has access to that matches the prompt. revenue and cost are in ￥ not $. Do not include the employee_id of that user, or any uuid (36 digit random strings) as it does not make sense to users.`
 
 module.exports = async function (req) {
   if (!configuration.apiKey) {
