@@ -35,6 +35,7 @@ app.post('/generate', async (req, res) => {
   try {
     const generateInput = req.body.prompt; // Extract prompt from request body
     const session = req.body.session;
+    const user_id = req.body.user_id;
 
     // Call the local function from mygenerate.js
     const result = await fetch('http://'+IP+':8010/generate', {
@@ -44,7 +45,8 @@ app.post('/generate', async (req, res) => {
       },
       body: JSON.stringify({
           prompt: generateInput,
-          session_id: session
+          session_id: session,
+          user_id: user_id
       })
   });
     // Send the result back to the client

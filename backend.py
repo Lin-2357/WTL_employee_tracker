@@ -10,6 +10,7 @@ from sqlalchemy.ext.automap import automap_base
 import requests
 import uuid
 from datetime import datetime, timedelta
+import pymysql
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
@@ -18,7 +19,7 @@ CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "A
 # SQLite database configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'data/wtl_employee_tracker.db')}"  # Change to SQLite
+app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://root:%40Ljy20020910@localhost/wtl_employee_tracker"  # Change to SQLite
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'dkhfkasdhkjvhxcvhueh439erd7fy87awye79yr79'
 db = SQLAlchemy(app)
@@ -99,6 +100,12 @@ query_masks = {
             SELECT * FROM team_assignment
             WHERE employee_id = :employee_id
         ),
+        team AS (
+            SELECT * FROM team
+            WHERE team_id IN (
+                SELECT team_id FROM team_assignment
+            )
+        ),
         project AS (
             SELECT * FROM project
             WHERE team_id IN (
@@ -134,6 +141,12 @@ query_masks = {
                 WHERE employee_id = :employee_id
             )
         ),
+        team AS (
+            SELECT * FROM team
+            WHERE team_id IN (
+                SELECT team_id FROM team_assignment
+            )
+        ),
         project AS (
             SELECT * FROM project
             WHERE team_id IN (
@@ -163,6 +176,12 @@ query_masks = {
                 SELECT uuid FROM employee
             )
         ),
+        team AS (
+            SELECT * FROM team
+            WHERE team_id IN (
+                SELECT team_id FROM team_assignment
+            )
+        ),
         project AS (
             SELECT * FROM project
             WHERE team_id IN (
@@ -179,9 +198,9 @@ query_masks = {
         "level_4": """WITH _ AS (SELECT 1)"""  # Admin sees all
     }
     
-@app.before_request
-def enable_foreign_keys():
-    db.session.execute(text('PRAGMA foreign_keys=ON'))
+# @app.before_request
+# def enable_foreign_keys():
+#     db.session.execute(text('PRAGMA foreign_keys=ON'))
 
 
 # Login route
@@ -277,19 +296,25 @@ def add_report():
         try:
             project_uuid = str(db.session.execute(text("SELECT project.uuid AS uuid FROM project JOIN team ON project.team_id = team.uuid WHERE team.name = :id"), {"id": project_rep[i]['project_id']}).first()[0])
             print(project_uuid)
-            project_rep[i]['project_id'] = project_uuid
+            project_rep[i]['project_uuid'] = project_uuid
         except Exception as e:
             print(e)
-            return "invalid project id", 500
+            return "invalid project id: "+project_rep[i]['project_id'], 500
 
     user_query = """INSERT INTO work_hour (uuid, employee_id, project_id, start_date, end_date, is_reversed, is_standardized, task_description, hour)
-    VALUES (:uuid, :employee_id, :project_id, :start_date, :end_date, :is_reversed, :is_standardized, :description, :hour)"""
+    VALUES (:uuid, :employee_id, :project_uuid, :start_date, :end_date, :is_reversed, :is_standardized, :description, :hour)"""
 
     # Dynamically build the CTE query
     full_query = f"{user_query}"
     # Execute the query securely
     try:
         for x in project_rep:
+            find_team = str(db.session.execute(text("SELECT uuid FROM team where name = :team_name"), {'team_name':x['project_id']}).first()[0])
+            find_assignment = db.session.execute(text("SELECT uuid FROM team_assignment where team_id = :team_id AND employee_id = :employee_id"), {'team_id': find_team, "employee_id": x['employee_id']}).first()
+            print(find_assignment)
+            if (not find_assignment):
+                db.session.execute(text("INSERT INTO team_assignment (uuid, team_id, employee_id) VALUES (:uuid, :team_id, :employee_id)"), {"uuid":str(uuid.uuid4()), "team_id":find_team, "employee_id":x['employee_id']})
+            x.pop('project_id', None)
             db.session.execute(text(full_query), x)
         db.session.commit()
         return {"ok":True}, 200
