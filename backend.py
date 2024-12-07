@@ -231,6 +231,15 @@ def create_session():
     ).text
     return session, 200
 
+
+@app.route('/validate', methods=['GET'])
+@jwt_required()
+def validate():
+    user_identity = json.loads(get_jwt_identity())
+    employee_id = user_identity['employee_id']
+    return {'id': employee_id}, 200
+
+
 @app.route('/populate', methods=['POST'])
 @jwt_required()
 def populate_ID():
