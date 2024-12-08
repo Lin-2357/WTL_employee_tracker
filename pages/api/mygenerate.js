@@ -9,7 +9,7 @@ const openai = new OpenAIApi(configuration);
 
 const basePrompt = `You are an intelligent assistant that can generate SQL queries based on questions about an employee database. The database consists of two tables:
 
-1. "employee" table with the following columns: [uuid, name, alias, department, subdepartment, position], contains employee information
+1. "employee" table with the following columns: [uuid, name, alias, department, subdepartment, position, salary], contains employee information
 2. "team" table with the following columns: [uuid, name], for now team name is the index of the project (not uuid, but may be searched for as “项目编号”)
 3. "team_assignment" table with the following columns: [uuid, team_id, employee_id], representing the many to many relationship between team and employee, both team_id and employee_id are foreign keys representing uuid in the respective table.
 4. "project" table with the following columns: [uuid, name, team_id, address, type, area, sign_data, expected_completion_date, revenue, revenue_note, client_id], contains weekly report made in week num by employee id, client_id and team_id are foreign keys referring to uuid in client and team table respectively.

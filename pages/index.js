@@ -9,6 +9,7 @@ function displayObj(obj) {
 export default function Home() {
 
   const IP = process.env.NEXT_PUBLIC_IP_ADDRESS;
+  const basePrompt = "\n If the prompt specifies time, filter from start_date in work_hour unless otherwise specified, for reference today's date is "+(new Date().toLocaleString()) + "\n If the prompt ask about the timespan of a project, it is calculated as (TO_DAYS(MAX(work_hour.end_date)) - TO_DAYS(MIN(work_hour.start_date)))/30 using the TO_DAYS function in mysql and convert it to month" + "\n If the prompt ask about labor cost of a project for an indivial, it is calculated as the [work_hour.hour spent on project] / [work_hour.hour in total within the timespan] * [timespan in month] * [employee.salary of the person]. For labor cost of a project it is the labor cost of that project for each individuals summed across all person involved in the project."
 
   const [animalInput, setAnimalInput] = useState("");
   const [result, setResult] = useState([]);
@@ -73,7 +74,8 @@ export default function Home() {
         return
       }
 
-      prt = prt+"\n this question is made by employee ID: "+from_id.id
+      prt = prt + basePrompt;
+
 
       var response = await fetch("http://"+IP+":4000/generate", {
         method: "POST",

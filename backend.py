@@ -221,7 +221,7 @@ def execute_query():
     employee_id = user_identity['employee_id']
     role = user_identity['role']
     # User's query
-    user_query = request.json.get('query').replace("`", '')
+    user_query = request.json.get('query').replace("`", '').replace("julianday", 'TO_DAYS').replace("JULIANDAY", "TO_DAYS")
     if "SELECT" not in user_query:
         return "query invalid", 400
 
@@ -236,6 +236,7 @@ def execute_query():
         result = db.session.execute(text(full_query), {"employee_id": employee_id})
         return jsonify([row._asdict() for row in result])
     except Exception as _:
+        print(_)
         return "query execution failed", 500
 
 @app.route('/create', methods=['GET'])
