@@ -73,7 +73,8 @@ export default function Home() {
         return
       }
 
-      prt = prt+"\n if the prompt uses 'me' it is referred to employee ID: "+from_id.id
+      prt = prt +"\n if the prompt uses 'me' or 'I' it is referred to employee ID: "+ from_id.id + " disregard this id otherwise. If the prompt specifies time, filter from start_date in work_hour unless otherwise specified, for reference today's date is "+(new Date().toLocaleString())
+
 
       var response = await fetch("http://"+IP+":4000/generate", {
         method: "POST",
