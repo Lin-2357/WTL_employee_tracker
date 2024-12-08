@@ -73,7 +73,7 @@ export default function Home() {
         return
       }
 
-      prt = prt+"\n this question is made by employee ID: "+from_id.id
+      prt = prt+"\n if the prompt uses 'me' it is referred to employee ID: "+from_id.id
 
       var response = await fetch("http://"+IP+":4000/generate", {
         method: "POST",
