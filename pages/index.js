@@ -20,11 +20,12 @@ export default function Home() {
   const [project, setProject] = useState([""]);
   const [hours, setHours] = useState([""]);
   const [keywords, setKeywords] = useState([""]);
-  const [instruction, setInstruction] = useState('describe what you have done this week!');
+  const [instruction, setInstruction] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [session_id, setSessionID] = useState('');
   const [stage, setStage] = useState([''])
+  const [language, setLanguage] = useState('English')
 
   function addResult(message, client=false) {
     setResult((prevresult)=>{return [{message: message, client: client}, ...prevresult]})
@@ -217,7 +218,7 @@ export default function Home() {
             }
     
           }}>
-            <h3>Generate Weekly Report</h3>
+            <h3>{{"English":"Make a weekly report.", "中文":"创建周报"}[language]}</h3>
             <p>{instruction}</p>
             {/*<textarea className={styles.textbox} style={{width: '95%'}} value={report} onChange={(e)=>{setReport(e.target.value)}} placeholder="type your report in text here, and click the green button to let AI fill in statistics for you."></textarea>
             <div className={styles.add} style={{marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}} onClick={()=>{populate()}}>Populate your statistics with AI</div>*/}
@@ -230,9 +231,9 @@ export default function Home() {
               setKeywords([...keywords, ""])
               setStage([...stage, ''])
             }
-            }>Add another report</div>
-            <div className={styles.close} onClick={()=>{setInputPopup(false);setInstruction('describe what you have done this week!');}}></div>
-            <input type="submit" value="Submit report" />
+            }>{{"English":"Add another report", "中文": "新增一条报告"}[language]}</div>
+            <div className={styles.close} onClick={()=>{setInputPopup(false);setInstruction('');}}></div>
+            <input type="submit" value={{"English":"Submit report", "中文":"提交工时报告"}[language]} />
           </form>
       </div>)
     }
@@ -240,22 +241,22 @@ export default function Home() {
 
   function renderReport() {
     return project.map( (v,i)=> (
-      <div style={{border: '2px solid #353740', marginBottom: 10, borderRadius: 10}}>
+      <div key={i} style={{border: '2px solid #353740', marginBottom: 10, borderRadius: 10}}>
       <input
       type="text"
       name="project"
-      placeholder="Enter the project ID, or a name that can locate it."
+      placeholder={{"English":"Enter the project ID, or a name that can locate it.", "中文":"键入项目编号，或键入名称然后点击查询"}[language]}
       value={v}
       onChange={(e) => {
         setProject([...project.slice(0, i), e.target.value, ...project.slice(i+1)])
       }}></input>
       <div className={styles.add} style={{marginBottom: 10, marginLeft: 10, backgroundColor: '#10a37f'}} onClick={
         ()=>{populate(i)}
-      }>Search for ID</div>
+      }>{{"English":"Search for ID", "中文": "查询编号"}[language]}</div>
       <input
       type="text"
       name="hours"
-      placeholder="Enter the number of hours"
+      placeholder={{"English":"Enter the number of hours.", "中文":"键入工时（单位：小时）"}[language]}
       value={hours[i]}
       onChange={(e) => {
         setHours([...hours.slice(0, i), e.target.value, ...hours.slice(i+1)])
@@ -263,7 +264,7 @@ export default function Home() {
       <input
       type="text"
       name="key"
-      placeholder="Enter the description of your work"
+      placeholder={{"English":"Enter the description of your work.", "中文":"键入工作内容简述"}[language]}
       value={keywords[i]}
       onChange={(e) => {
         setKeywords([...keywords.slice(0, i), e.target.value, ...keywords.slice(i+1)])
@@ -271,13 +272,13 @@ export default function Home() {
       <input
       type="text"
       name="stage"
-      placeholder="Enter the stage of your project."
+      placeholder={{"English":"Enter the stage of project.", "中文":"键入项目阶段"}[language]}
       value={stage[i]}
       onChange={(e) => {
         setStage([...stage.slice(0, i), e.target.value, ...stage.slice(i+1)])
       }}></input>
-      Is your work reversed? <input type="checkbox" value={is_reversed[i]} onChange={(e)=>{setReversed([...is_reversed.slice(0, i), e.target.checked , ...is_reversed.slice(i+1)])}}></input>
-      Is your work standardized? <input type="checkbox" value={is_standardized[i]} onChange={(e)=>{setStandardized([...is_standardized.slice(0, i), e.target.checked , ...is_standardized.slice(i+1)])}}></input>
+      {{"English":"Is your work reversed?", "中文": "是否返工"}[language]} <input type="checkbox" value={is_reversed[i]} onChange={(e)=>{setReversed([...is_reversed.slice(0, i), e.target.checked , ...is_reversed.slice(i+1)])}}></input>
+      {{"English":"Is your work standardized?", "中文": "是否符合标准化"}[language]} <input type="checkbox" value={is_standardized[i]} onChange={(e)=>{setStandardized([...is_standardized.slice(0, i), e.target.checked , ...is_standardized.slice(i+1)])}}></input>
       
       <div className={styles.add} style={{marginBottom: 10, marginLeft: 10, backgroundColor: '#808080'}} onClick={
         () => {
@@ -288,7 +289,7 @@ export default function Home() {
           setKeywords([...keywords.slice(0, i), ...keywords.slice(i+1)])
           setStage([...stage.slice(0, i), ...stage.slice(i+1)])          
         }
-      }>Remove this report</div>
+      }>{{"English":"Remove this report", "中文": "删除本条报告"}[language]}</div>
       </div>
       )
     )
@@ -305,10 +306,10 @@ export default function Home() {
     if (response.ok) {
       sessionStorage.setItem('jwtToken', data.access_token);
       await resetSession()
-      addResult("Log in successful") // Return the JWT token
+      addResult({"English":"Log in successful", "中文": "登录成功"}[language]) // Return the JWT token
       setPopup(false)
     } else if (response.status === 401) {
-      alert("invalid username or password. Please try again.")
+      alert({"English": "invalid username or password. Please try again.", "中文": "未知的用户名/密码，请重试。"})
     }
     else {
         throw new Error(data.message);
@@ -318,12 +319,12 @@ export default function Home() {
   function renderLogin() {
     if (popup) {
       return (<div className={styles.login}>
-        <div style={{position: "relative"}}><h4 style={{marginLeft: "5px"}}>Login</h4><div className={styles.close} onClick={()=>{setPopup(false)}}></div></div>
+        <div style={{position: "relative"}}><h4 style={{marginLeft: "5px"}}>{{"English":"Login", "中文": "登录"}[language]}</h4><div className={styles.close} onClick={()=>{setPopup(false)}}></div></div>
         <form onSubmit={login}>
           <input
             type="text"
             name="username"
-            placeholder="Enter Your username"
+            placeholder={{"English":"Enter Your username", '中文': "键入用户名"}[language]}
             value={username}
             onChange={(e) => {
               setUsername(e.target.value)
@@ -332,13 +333,13 @@ export default function Home() {
           <input
             type="password"
             name="password"
-            placeholder="Enter Your password"
+            placeholder={{"English":"Enter Your password", '中文': "键入密码"}[language]}
             value={password}
             onChange={(e) => {
               setPassword(e.target.value)
             }}
           />
-          <input type="submit" value="Login" />
+          <input type="submit" value={{"English":"Login", "中文": "登录"}[language]}/>
         </form>
       </div>
       )
@@ -355,7 +356,7 @@ export default function Home() {
     });
     if (dat.status !== 200) {
       if (dat.status === 401) {
-        alert("Log in expired, please re-login.")
+        alert({"English":"Log in expired, please re-login.", "中文":"登录过期，请重新登录。"})
       } else {
         throw data.error || new Error(`Request failed with status ${dat.status}`);
       }
@@ -363,7 +364,7 @@ export default function Home() {
     const uuid = await dat.json();
     if (uuid.session_id) {
       setSessionID(uuid.session_id);
-      setResult([{message: "New session created.", client: false}])
+      setResult([{message: {"English":"New session created.", "中文": "新的聊天已创建"}[language], client: false}])
     }
   }
 
@@ -387,16 +388,18 @@ export default function Home() {
 
       <main className={styles.main}>
         <div className={styles.headbar}>
-          <div className={styles.titlebar}><span style={{fontSize: '34px', verticalAlign: 'middle',fontWeight: 500, marginRight: 10}}>Fetch employees and reports</span><img src="/squid.png" className={styles.icon} /></div>
+          <div className={styles.titlebar}><span className={styles.language} style={{fontSize: '34px', border: 'none'}}>{{"English": 'Employee Report', "中文":"员工周报"}[language]}</span><img src="/squid.png" className={styles.icon} />
+            <div className={styles.language} style={{backgroundColor: (language=="中文"? "#10a37f":"#fff")}} onClick={(e)=>{setLanguage("中文")}}>中文</div>
+            <div className={styles.language} style={{backgroundColor: (language=="English"? "#10a37f":"#fff")}} onClick={(e)=>{setLanguage("English")}}>English</div></div>
           <div className={styles.loginbutton} onClick={(e)=>setPopup(true)}>{getUsername()}</div>
           <div className={styles.loginbutton} style={{left:0, width: 'fit-content', padding:'0 10px 0 10px', borderRadius:'10px'}} onClick={()=>{
             if (getUsername()) {
               setInputPopup(true);
             } else {
-              alert("Please log in before you create report.")
+              alert({"English":"Please log in before you create report.", "中文":"请先登录"}[language])
               setPopup(true);
             }
-          }}>Create Report</div>
+          }}>{{"English":"Create Report","中文":"创建周报"}[language]}</div>
         </div>
         <div className={styles.result}>{renderResult()}</div>
 
@@ -409,11 +412,11 @@ export default function Home() {
                 setPopup(true);
               }
             }
-          }>Reset</div>
-          <input type="submit" value="Send" className={styles.chatSend}/>
+          }>{{"English":"Reset", "中文":"重置聊天"}[language]}</div>
+          <input type="submit" value={{"English":"Send", "中文": "发送"}[language]} className={styles.chatSend}/>
           <textarea
             name="animal"
-            placeholder="Enter a query or a prompt"
+            placeholder={{"English":"Enter a query or a prompt", "中文": "键入要查询的问题"}[language]}
             value={animalInput}
             onChange={(e) => {
               setAnimalInput(e.target.value)

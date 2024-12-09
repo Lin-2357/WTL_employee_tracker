@@ -219,10 +219,24 @@
   margin: auto;
   width: fit-content;
   text-align: center;
+  align-items: center;
   padding: 13px;
+  display: flex;
+  flex-direction: row;
+}
+.language {
+  margin-left: 10px;
+  font-size: 20px;
+  vertical-align: 'middle';
+  font-weight: 500;
+  border-radius: 5px;
+  padding: 5px;
+  border: 2px solid black;
+  cursor: pointer;
 }
 .icon {
   vertical-align: middle;
+  margin-left: 10px;
 }
 .textbox {
   width: 600px;
