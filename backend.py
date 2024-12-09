@@ -303,8 +303,8 @@ def add_report():
             print(e)
             return "invalid project id: "+project_rep[i]['project_id'], 500
 
-    user_query = """INSERT INTO work_hour (uuid, employee_id, project_id, start_date, end_date, is_reversed, is_standardized, task_description, hour)
-    VALUES (:uuid, :employee_id, :project_uuid, :start_date, :end_date, :is_reversed, :is_standardized, :description, :hour)"""
+    user_query = """INSERT INTO work_hour (uuid, employee_id, project_id, start_date, end_date, is_reversed, is_standardized, task_description, hour, stage)
+    VALUES (:uuid, :employee_id, :project_uuid, :start_date, :end_date, :is_reversed, :is_standardized, :description, :hour, :stage)"""
 
     # Dynamically build the CTE query
     full_query = f"{user_query}"

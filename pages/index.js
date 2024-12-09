@@ -210,7 +210,7 @@ export default function Home() {
               const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
               const arr = [];
               for (var i=0; i<project.length; i++) {
-                arr.push({project_id: project[i], hour: hours[i], is_standardized: is_standardized[i], is_reversed: is_reversed[i], description: keywords[i]})
+                arr.push({project_id: project[i], hour: hours[i], is_standardized: is_standardized[i], is_reversed: is_reversed[i], description: keywords[i], stage:allStages[stage[i]]['中文']})
               }
               const response = await fetch("http://"+IP+":8888/report", {
                 method: "POST",
