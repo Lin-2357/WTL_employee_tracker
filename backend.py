@@ -272,7 +272,8 @@ def populate_ID():
     user_query = "SELECT team.name AS id, project.name as name from team JOIN project ON team.uuid = project.team_id WHERE project.name LIKE :given_name"
 
     # Dynamically build the CTE query
-    full_query = f"{query_masks[role]} {user_query}"
+    full_query = f"{user_query}"
+    print(full_query)
     # Execute the query securely
     try: 
         result = db.session.execute(text(full_query), {"employee_id": employee_id, "given_name": "%"+project_name+"%"})
