@@ -10,6 +10,13 @@ export default function Home() {
 
   const IP = process.env.NEXT_PUBLIC_IP_ADDRESS;
   const basePrompt = "\n If the prompt ask about GS/ISS projects search from team name. If the prompt ask about subdepartment, query with group by (department, subdepartment). If the prompt ask about average work hour, it is average across all associated employee not report. If the prompt specifies time, filter from start_date in work_hour unless otherwise specified, for reference today's date is "+(new Date().toLocaleString()) + "\n If the prompt ask about the timespan of a project, it is calculated as (TO_DAYS(MAX(work_hour.end_date)) - TO_DAYS(MIN(work_hour.start_date)))/30 using the TO_DAYS function in mysql and convert it to month" + "\n If the prompt ask about labor cost of a project for an indivial, it is calculated as the [work_hour.hour spent on project] / [work_hour.hour in total within the timespan] * [timespan in month] * [employee.salary of the person]. For labor cost of a project it is the labor cost of that project for each individuals summed across all person involved in the project."
+  const allStages = [
+    {"English": "1. Bidding Stage", "中文": "1. 投标阶段"},
+    {"English": "2. Design Stage","中文": "2. 设计阶段"},
+    {"English": "3. Construction Stage", "中文": "3. 施工阶段"},
+    {"English": "4. Completion Stage", "中文": "4. 竣工阶段"},
+    {"English": "5. After-sales Stage", "中文": "5. 售后阶段"},
+  ]
 
   const [animalInput, setAnimalInput] = useState("");
   const [result, setResult] = useState([]);
@@ -18,13 +25,14 @@ export default function Home() {
   const [is_reversed, setReversed] = useState([false]);
   const [is_standardized, setStandardized] = useState([true]);
   const [project, setProject] = useState([""]);
+  const [projectName, setProjectName] = useState([''])
   const [hours, setHours] = useState([""]);
   const [keywords, setKeywords] = useState([""]);
   const [instruction, setInstruction] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [session_id, setSessionID] = useState('');
-  const [stage, setStage] = useState([''])
+  const [stage, setStage] = useState([0])
   const [language, setLanguage] = useState('English')
 
   function addResult(message, client=false) {
@@ -172,13 +180,18 @@ export default function Home() {
       
       if (out.length > 0) {
         if (out.length === 1) {
-          setInstruction("Project found")
+          setInstruction({"English": "found ", "中文": "找到"}[language]+out[0].name)
+          setProjectName([...projectName.slice(0, i), out[0].name, ...projectName.slice(i+1)])
           setProject([...project.slice(0, i), out[0].id, ...project.slice(i+1)])
         } else {
-          setInstruction("Multiple projects found: "+JSON.stringify(out))
+          var newinstruction = {"English": "Multiple projects found:", "中文":"请选择以下项目之一："}[language]
+          for (let i=0;i<out.length; i++){
+            newinstruction += "\n" + out[i].id + ": " + out[i].name
+          }
+          setInstruction(newinstruction);
         }
       } else {
-        setInstruction("No projects found")
+        setInstruction({"English":"No projects found", "中文": "未找到对应项目"}[language])
       }
     } catch (error) {
       console.error(error.message)
@@ -190,6 +203,9 @@ export default function Home() {
       return (<div className={styles.popup}>
           <form style={{width: '100%', position:'relative'}} onSubmit={async(e)=>{
             e.preventDefault()
+            if (!confirm({"English": "Are you sure you want to submit?", "中文": "确认提交周报？"}[language])) {
+              return
+            }
             try {
               const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
               const arr = [];
@@ -211,15 +227,18 @@ export default function Home() {
             
               const data = await response.json();
               console.log("Report successfully sent", data);
-              setInstruction("Report successfully sent")
+              setInstruction({"English":"Report successfully sent", "中文":"周报提交成功"}[language])
+              alert({"English":"Report successfully sent", "中文":"周报提交成功"}[language])
             } catch (error) {
               console.error("Error in POST request:", error.message);
-              setInstruction("Failed to send report")
+              setInstruction({"English":"Failed to send report", "中文":"周报提交失败"}[language])
+              alert({"English":"Failed to send report", "中文":"周报提交失败"}[language])
             }
     
           }}>
-            <h3>{{"English":"Make a weekly report.", "中文":"创建周报"}[language]}</h3>
-            <p>{instruction}</p>
+            <h3 style={{marginBottom: '10px'}}>{{"English":"Make a weekly report.", "中文":"创建周报"}[language]}</h3>
+            <div style={{fontWeight: 700, marginBottom:5}}>{{"English": 'You are reporting for ', "中文": '周报日期：'}[language]}{new Date(Date.now()-7*86400000).getFullYear()}/{new Date(Date.now()-7*86400000).getMonth()+1}/{new Date(Date.now()-7*86400000).getDate()}-{new Date(new Date(Date.now()-86400000)).getFullYear()}/{new Date(Date.now()-86400000).getMonth()+1}/{new Date(Date.now()-86400000).getDate()}</div>
+            <div style={{whiteSpace:'pre-wrap'}}>{instruction}</div>
             {/*<textarea className={styles.textbox} style={{width: '95%'}} value={report} onChange={(e)=>{setReport(e.target.value)}} placeholder="type your report in text here, and click the green button to let AI fill in statistics for you."></textarea>
             <div className={styles.add} style={{marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}} onClick={()=>{populate()}}>Populate your statistics with AI</div>*/}
             {renderReport()}
@@ -229,10 +248,11 @@ export default function Home() {
               setReversed([...is_reversed, false])
               setStandardized([...is_standardized, true])
               setKeywords([...keywords, ""])
-              setStage([...stage, ''])
+              setStage([...stage, 0])
+              setProjectName([...projectName, ''])
             }
             }>{{"English":"Add another report", "中文": "新增一条报告"}[language]}</div>
-            <div className={styles.close} onClick={()=>{setInputPopup(false);setInstruction('');}}></div>
+            <div className={styles.close} onClick={()=>{setInputPopup(false);setInstruction('');}}>x</div>
             <input type="submit" value={{"English":"Submit report", "中文":"提交工时报告"}[language]} />
           </form>
       </div>)
@@ -249,7 +269,7 @@ export default function Home() {
       value={v}
       onChange={(e) => {
         setProject([...project.slice(0, i), e.target.value, ...project.slice(i+1)])
-      }}></input>
+      }}></input><span>{projectName[i]}</span>
       <div className={styles.add} style={{marginBottom: 10, marginLeft: 10, backgroundColor: '#10a37f'}} onClick={
         ()=>{populate(i)}
       }>{{"English":"Search for ID", "中文": "查询编号"}[language]}</div>
@@ -259,7 +279,9 @@ export default function Home() {
       placeholder={{"English":"Enter the number of hours.", "中文":"键入工时（单位：小时）"}[language]}
       value={hours[i]}
       onChange={(e) => {
-        setHours([...hours.slice(0, i), e.target.value, ...hours.slice(i+1)])
+        if (!e.target.value || !isNaN(parseFloat(e.target.value))) {
+          setHours([...hours.slice(0, i), e.target.value ? (e.target.value[e.target.value.length-1]=='.'? e.target.value : parseFloat(e.target.value).toString()) : '', ...hours.slice(i+1)])
+        }
       }}></input>
       <input
       type="text"
@@ -269,27 +291,35 @@ export default function Home() {
       onChange={(e) => {
         setKeywords([...keywords.slice(0, i), e.target.value, ...keywords.slice(i+1)])
       }}></input>
-      <input
-      type="text"
-      name="stage"
-      placeholder={{"English":"Enter the stage of project.", "中文":"键入项目阶段"}[language]}
-      value={stage[i]}
-      onChange={(e) => {
-        setStage([...stage.slice(0, i), e.target.value, ...stage.slice(i+1)])
-      }}></input>
-      {{"English":"Is your work reversed?", "中文": "是否返工"}[language]} <input type="checkbox" value={is_reversed[i]} onChange={(e)=>{setReversed([...is_reversed.slice(0, i), e.target.checked , ...is_reversed.slice(i+1)])}}></input>
-      {{"English":"Is your work standardized?", "中文": "是否符合标准化"}[language]} <input type="checkbox" value={is_standardized[i]} onChange={(e)=>{setStandardized([...is_standardized.slice(0, i), e.target.checked , ...is_standardized.slice(i+1)])}}></input>
+      <div className={styles.stage}>
+      <div onClick={()=>{
+          if (stage[i]>0) {
+            setStage([...stage.slice(0, i), stage[i]-1, ...stage.slice(i+1)])
+          }
+        }} className={styles.close} style={{position: 'relative', marginRight: 'auto', backgroundColor: '#10a37f'}}>-</div>
+        <div style={{margin: 'auto'}}>{{"English": 'Project stage: ', "中文": '项目阶段：'}[language]}{allStages[stage[i]][language]}</div>
+        <div onClick={()=>{
+          if (stage[i]<allStages.length-1) {
+            setStage([...stage.slice(0, i), stage[i]+1, ...stage.slice(i+1)])
+          }
+        }} className={styles.close} style={{position: 'relative', marginLeft: 'auto', backgroundColor: '#10a37f'}}>+</div>
+      </div>
+      <span style={{margin: 10}}>{{"English":"Is your work reversed?", "中文": "是否返工"}[language]}</span> <input type="checkbox" value={is_reversed[i]} onChange={(e)=>{setReversed([...is_reversed.slice(0, i), e.target.checked , ...is_reversed.slice(i+1)])}}></input>
+      <span style={{margin: 10}}>{{"English":"Is your work standardized?", "中文": "是否符合标准化"}[language]}</span> <input type="checkbox" value={is_standardized[i]} onChange={(e)=>{setStandardized([...is_standardized.slice(0, i), e.target.checked , ...is_standardized.slice(i+1)])}}></input>
       
-      <div className={styles.add} style={{marginBottom: 10, marginLeft: 10, backgroundColor: '#808080'}} onClick={
+      <div className={styles.add} style={{margin: 10, backgroundColor: '#905050'}} onClick={
         () => {
-          setHours([...hours.slice(0, i), ...hours.slice(i+1)])
-          setProject([...project.slice(0, i), ...project.slice(i+1)])
-          setReversed([...is_reversed.slice(0, i), ...is_reversed.slice(i+1)])
-          setStandardized([...is_standardized.slice(0, i), ...is_standardized.slice(i+1)])
-          setKeywords([...keywords.slice(0, i), ...keywords.slice(i+1)])
-          setStage([...stage.slice(0, i), ...stage.slice(i+1)])          
+          if (confirm({"English": 'Are you sure to delete this report?', "中文": '确定删除本条报告？'}[language])) {
+            setHours([...hours.slice(0, i), ...hours.slice(i+1)])
+            setProject([...project.slice(0, i), ...project.slice(i+1)])
+            setReversed([...is_reversed.slice(0, i), ...is_reversed.slice(i+1)])
+            setStandardized([...is_standardized.slice(0, i), ...is_standardized.slice(i+1)])
+            setKeywords([...keywords.slice(0, i), ...keywords.slice(i+1)])
+            setStage([...stage.slice(0, i), ...stage.slice(i+1)])
+            setProjectName([...projectName.slice(0, i), ...projectName.slice(i+1)])
+          }        
         }
-      }>{{"English":"Remove this report", "中文": "删除本条报告"}[language]}</div>
+      }>{{"English":"Delete this report", "中文": "删除本条报告"}[language]}</div>
       </div>
       )
     )
@@ -319,7 +349,7 @@ export default function Home() {
   function renderLogin() {
     if (popup) {
       return (<div className={styles.login}>
-        <div style={{position: "relative"}}><h4 style={{marginLeft: "5px"}}>{{"English":"Login", "中文": "登录"}[language]}</h4><div className={styles.close} onClick={()=>{setPopup(false)}}></div></div>
+        <div style={{position: "relative"}}><h4 style={{marginLeft: "5px"}}>{{"English":"Login", "中文": "登录"}[language]}</h4><div className={styles.close} onClick={()=>{setPopup(false)}}>x</div></div>
         <form onSubmit={login}>
           <input
             type="text"

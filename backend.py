@@ -269,7 +269,7 @@ def populate_ID():
     # User's query
     project_name = request.json.get('name')
 
-    user_query = "SELECT team.name AS id, project.name as name from team JOIN project ON team.uuid = project.team_id WHERE project.name LIKE :given_name"
+    user_query = "SELECT team.name AS id, project.name as name from team JOIN project ON team.uuid = project.team_id WHERE project.name LIKE :given_name OR team.name LIKE :given_name"
 
     # Dynamically build the CTE query
     full_query = f"{user_query}"
@@ -291,7 +291,7 @@ def add_report():
     project_rep = request.json.get("Array_input")
     for i in range(len(project_rep)):
         project_rep[i]['employee_id'] = employee_id
-        project_rep[i]['end_date'] = datetime.today()
+        project_rep[i]['end_date'] = datetime.today() - timedelta(days=1)
         project_rep[i]['start_date'] = datetime.today() - timedelta(days=7)
         project_rep[i]['hour'] = float(project_rep[i]['hour'])
         project_rep[i]['uuid'] = str(uuid.uuid4())
