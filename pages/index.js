@@ -23,12 +23,15 @@ export default function Home() {
   const [popup, setPopup] = useState(true);
   const [inputPopup, setInputPopup] = useState(false);
   const [is_reversed, setReversed] = useState([false]);
-  const [is_standardized, setStandardized] = useState([true]);
+  const [is_reversed_desc, setReversedDESC] = useState(['']);
+  const [is_standardized, setStandardized] = useState([false]);
+  const [is_standardized_desc, setStandardizedDESC] = useState(['']);
   const [project, setProject] = useState([""]);
   const [projectName, setProjectName] = useState([''])
   const [hours, setHours] = useState([""]);
   const [keywords, setKeywords] = useState([""]);
   const [instruction, setInstruction] = useState('');
+  const [projectList, setProjectList] = useState([''])
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [session_id, setSessionID] = useState('');
@@ -175,12 +178,16 @@ export default function Home() {
         },
         body: JSON.stringify({ name: project[i] }),
       });
+      if (interpretation.status == 401) {
+        alert({"English":"Log in expired, please re-login.", "中文":"登录过期，请重新登录。"}[language])
+        return;
+      }
       const out = await interpretation.json()
       console.log(out)
       
       if (out.length > 0) {
         if (out.length === 1) {
-          setInstruction({"English": "found ", "中文": "找到"}[language]+out[0].name)
+          setProjectList([...projectList.slice(0, i), {"English": "found ", "中文": "找到"}[language]+"\n"+out[0].id+": "+out[0].name, ...projectList.slice(i+1)])
           setProjectName([...projectName.slice(0, i), out[0].name, ...projectName.slice(i+1)])
           setProject([...project.slice(0, i), out[0].id, ...project.slice(i+1)])
         } else {
@@ -188,10 +195,10 @@ export default function Home() {
           for (let i=0;i<out.length; i++){
             newinstruction += "\n" + out[i].id + ": " + out[i].name
           }
-          setInstruction(newinstruction);
+          setProjectList([...projectList.slice(0, i), newinstruction, ...projectList.slice(i+1)]);
         }
       } else {
-        setInstruction({"English":"No projects found", "中文": "未找到对应项目"}[language])
+        setProjectList([...projectList.slice(0, i), {"English":"No projects found", "中文": "未找到对应项目"}[language], ...projectList.slice(i+1)])
       }
     } catch (error) {
       console.error(error.message)
@@ -227,7 +234,17 @@ export default function Home() {
             
               const data = await response.json();
               console.log("Report successfully sent", data);
-              setInstruction({"English":"Report successfully sent", "中文":"周报提交成功"}[language])
+              setReversed([false]);
+              setReversedDESC(['']);
+              setStandardized([false]);
+              setStandardizedDESC(['']);
+              setProject([""]);
+              setProjectName([''])
+              setHours([""]);
+              setKeywords([""]);
+              setProjectList([''])
+              setStage([0]);
+              setInstruction({"English":"Report successfully sent, total work hours ", "中文":"周报提交成功，共计录入工时"}[language]+hours.reduce((accumulator, currentValue) => accumulator + currentValue, 0).toString());
               alert({"English":"Report successfully sent", "中文":"周报提交成功"}[language])
             } catch (error) {
               console.error("Error in POST request:", error.message);
@@ -238,7 +255,6 @@ export default function Home() {
           }}>
             <h3 style={{marginBottom: '10px'}}>{{"English":"Make a weekly report.", "中文":"创建周报"}[language]}</h3>
             <div style={{fontWeight: 700, marginBottom:5}}>{{"English": 'You are reporting for ', "中文": '周报日期：'}[language]}{new Date(Date.now()-7*86400000).getFullYear()}/{new Date(Date.now()-7*86400000).getMonth()+1}/{new Date(Date.now()-7*86400000).getDate()}-{new Date(new Date(Date.now()-86400000)).getFullYear()}/{new Date(Date.now()-86400000).getMonth()+1}/{new Date(Date.now()-86400000).getDate()}</div>
-            <div style={{whiteSpace:'pre-wrap'}}>{instruction}</div>
             {/*<textarea className={styles.textbox} style={{width: '95%'}} value={report} onChange={(e)=>{setReport(e.target.value)}} placeholder="type your report in text here, and click the green button to let AI fill in statistics for you."></textarea>
             <div className={styles.add} style={{marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}} onClick={()=>{populate()}}>Populate your statistics with AI</div>*/}
             {renderReport()}
@@ -246,22 +262,40 @@ export default function Home() {
               setHours([...hours, ""])
               setProject([...project, ''])
               setReversed([...is_reversed, false])
-              setStandardized([...is_standardized, true])
+              setStandardized([...is_standardized, false])
               setKeywords([...keywords, ""])
               setStage([...stage, 0])
               setProjectName([...projectName, ''])
+              setProjectList([...projectList, ''])
+              setReversedDESC([...is_reversed_desc, ''])
+              setStandardizedDESC([...is_standardized_desc, ''])
             }
             }>{{"English":"Add another report", "中文": "新增一条报告"}[language]}</div>
             <div className={styles.close} onClick={()=>{setInputPopup(false);setInstruction('');}}>x</div>
+            <div style={{whiteSpace:'pre-wrap'}}>{instruction}</div>
             <input type="submit" value={{"English":"Submit report", "中文":"提交工时报告"}[language]} />
           </form>
       </div>)
     }
   }
 
+  function renderList(i) {
+    return (<div key={i+999} style={{marginLeft: 10}}>
+      {projectList[i].split("\n").map(
+        (v,j) => {
+          return j>0 ? (<div key={j.toString()+"projectlist"} style={{border: '2px solid #10a37f', margin: '1px', cursor: 'pointer', borderRadius: '5px', width:'fit-content', padding:'2px'}} onClick={()=>{
+            setProject([...project.slice(0, i), v.split(':')[0], ...project.slice(i+1)])
+            setProjectName([...projectName.slice(0, i), v.split(': ')[1], ...projectName.slice(i+1)])
+          }}>{v}</div>) : v
+        }
+      )}
+    </div>)
+  }
+
   function renderReport() {
     return project.map( (v,i)=> (
       <div key={i} style={{border: '2px solid #353740', marginBottom: 10, borderRadius: 10}}>
+      {renderList(i)}
       <input
       type="text"
       name="project"
@@ -283,14 +317,20 @@ export default function Home() {
           setHours([...hours.slice(0, i), e.target.value ? (e.target.value[e.target.value.length-1]=='.'? e.target.value : parseFloat(e.target.value).toString()) : '', ...hours.slice(i+1)])
         }
       }}></input>
-      <input
-      type="text"
+      <textarea
+      className={styles.chatInput} style={{width: 'calc(100% - 60px)', marginLeft: '10px'}}
       name="key"
       placeholder={{"English":"Enter the description of your work.", "中文":"键入工作内容简述"}[language]}
       value={keywords[i]}
       onChange={(e) => {
         setKeywords([...keywords.slice(0, i), e.target.value, ...keywords.slice(i+1)])
-      }}></input>
+      }}
+      rows={1}
+      onInput={ (e)=>{
+          e.target.style.height = "auto";
+          e.target.style.height = (e.target.scrollHeight - 24) + "px";
+        }
+      }></textarea>
       <div className={styles.stage}>
       <div onClick={()=>{
           if (stage[i]>0) {
@@ -305,8 +345,36 @@ export default function Home() {
         }} className={styles.close} style={{position: 'relative', marginLeft: 'auto', backgroundColor: '#10a37f'}}>+</div>
       </div>
       <span style={{margin: 10}}>{{"English":"Is your work reversed?", "中文": "是否返工"}[language]}</span> <input type="checkbox" value={is_reversed[i]} onChange={(e)=>{setReversed([...is_reversed.slice(0, i), e.target.checked , ...is_reversed.slice(i+1)])}}></input>
+      {is_reversed[i] ? <textarea
+      className={styles.chatInput} style={{width: 'calc(100% - 60px)', marginLeft: '10px'}}
+      name="re"
+      placeholder={{"English":"Enter the reason.", "中文":"键入原因"}[language]}
+      value={is_reversed_desc[i]}
+      onChange={(e) => {
+        setReversedDESC([...is_reversed_desc.slice(0, i), e.target.value, ...is_reversed_desc.slice(i+1)])
+      }}
+      rows={1}
+      onInput={ (e)=>{
+          e.target.style.height = "auto";
+          e.target.style.height = (e.target.scrollHeight - 24) + "px";
+        }
+      }></textarea> : ''}
       <span style={{margin: 10}}>{{"English":"Is your work standardized?", "中文": "是否符合标准化"}[language]}</span> <input type="checkbox" value={is_standardized[i]} onChange={(e)=>{setStandardized([...is_standardized.slice(0, i), e.target.checked , ...is_standardized.slice(i+1)])}}></input>
-      
+      {is_standardized[i] ? <textarea
+      className={styles.chatInput} style={{width: 'calc(100% - 60px)', marginLeft: '10px'}}
+      name="st"
+      placeholder={{"English":"Enter the reason.", "中文":"键入原因"}[language]}
+      value={is_standardized_desc[i]}
+      onChange={(e) => {
+        console.log(is_standardized)
+        setStandardizedDESC([...is_standardized_desc.slice(0, i), e.target.value, ...is_standardized_desc.slice(i+1)])
+      }}
+      rows={1}
+      onInput={ (e)=>{
+          e.target.style.height = "auto";
+          e.target.style.height = (e.target.scrollHeight - 24) + "px";
+        }
+      }></textarea> : ''}
       <div className={styles.add} style={{margin: 10, backgroundColor: '#905050'}} onClick={
         () => {
           if (confirm({"English": 'Are you sure to delete this report?', "中文": '确定删除本条报告？'}[language])) {
@@ -317,7 +385,10 @@ export default function Home() {
             setKeywords([...keywords.slice(0, i), ...keywords.slice(i+1)])
             setStage([...stage.slice(0, i), ...stage.slice(i+1)])
             setProjectName([...projectName.slice(0, i), ...projectName.slice(i+1)])
-          }        
+            setProjectList([...projectList.slice(0, i), ...projectList.slice(i+1)])
+            setReversedDESC([...is_reversed_desc.slice(0, i), ...is_reversed_desc.slice(i+1)])
+            setStandardizedDESC([...is_standardized_desc.slice(0,i), ...is_standardized_desc.slice(i+1)])
+          }
         }
       }>{{"English":"Delete this report", "中文": "删除本条报告"}[language]}</div>
       </div>
@@ -332,17 +403,17 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username, password: password })
     });
-    const data = await response.json();
     if (response.ok) {
+      const data = await response.json();
       sessionStorage.setItem('jwtToken', data.access_token);
       await resetSession()
       addResult({"English":"Log in successful", "中文": "登录成功"}[language]) // Return the JWT token
       setPopup(false)
     } else if (response.status === 401) {
-      alert({"English": "invalid username or password. Please try again.", "中文": "未知的用户名/密码，请重试。"})
+      alert({"English": "invalid username or password. Please try again.", "中文": "未知的用户名/密码，请重试。"}[language])
     }
     else {
-        throw new Error(data.message);
+        throw new Error(response.message);
     }
   }
 

@@ -22,6 +22,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://root:%40Ljy20020910@localhost/wtl_employee_tracker"  # Change to SQLite
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'dkhfkasdhkjvhxcvhueh439erd7fy87awye79yr79'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=3)
 db = SQLAlchemy(app)
 jwt = JWTManager(app)  # Initialize JWT manager
 
@@ -199,7 +200,7 @@ query_masks = {
     }
     
 # @app.before_request
-# def enable_foreign_keys():
+# def refresh_login():
 #     db.session.execute(text('PRAGMA foreign_keys=ON'))
 
 
