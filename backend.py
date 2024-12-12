@@ -215,6 +215,34 @@ def login():
         return jsonify({'access_token': access_token}), 200
     return jsonify({'message': 'Invalid credentials'}), 401
 
+@app.route('/list', methods=['GET'])
+@jwt_required()
+def listReport():
+    user_identity = json.loads(get_jwt_identity())
+    employee_id = user_identity['employee_id']
+    full_query = "SELECT * FROM work_hour WHERE employee_id = :employee_id"
+    try:
+        result = db.session.execute(text(full_query), {"employee_id": employee_id})
+        return jsonify([row._asdict() for row in result])
+    except Exception as _:
+        print(_)
+        return "query execution failed", 500
+
+@app.route('/delete', methods=['POST'])
+@jwt_required()
+def delete():
+    user_identity = json.loads(get_jwt_identity())
+    full_query = "DELETE FROM work_hour WHERE uuid = :uuid"
+    uuid = request.json.get('uuid')
+    print(uuid)
+    try:
+        db.session.execute(text(full_query), {"uuid": uuid})
+        db.session.commit()
+        return {"success": 'ok'}
+    except Exception as _:
+        print(_)
+        return "query execution failed", 500
+
 @app.route('/query', methods=['POST'])
 @jwt_required()
 def execute_query():

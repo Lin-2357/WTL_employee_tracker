@@ -9,7 +9,7 @@ function displayObj(obj) {
 export default function Home() {
 
   const IP = process.env.NEXT_PUBLIC_IP_ADDRESS;
-  const basePrompt = "\n If the prompt ask about GS/ISS projects search from team name. If the prompt ask about subdepartment, query with group by (department, subdepartment). If the prompt ask about average work hour, it is average across all associated employee not report. If the prompt specifies time, filter from start_date in work_hour unless otherwise specified, for reference today's date is "+(new Date().toLocaleString()) + "\n If the prompt ask about the timespan of a project, it is calculated as (TO_DAYS(MAX(work_hour.end_date)) - TO_DAYS(MIN(work_hour.start_date)))/30 using the TO_DAYS function in mysql and convert it to month" + "\n If the prompt ask about labor cost of a project for an indivial, it is calculated as the [work_hour.hour spent on project] / [work_hour.hour in total within the timespan] * [timespan in month] * [employee.salary of the person]. For labor cost of a project it is the labor cost of that project for each individuals summed across all person involved in the project."
+  const basePrompt = "\n INSTRUCTIONS: If the prompt ask about GS/ISS projects search from team name. If the prompt ask about subdepartment, query with group by (department, subdepartment). If the prompt ask about average work hour, it is average across all associated employee not report. If the prompt specifies time, filter from start_date in work_hour unless otherwise specified, for reference today's date is "+(new Date().toLocaleString()) + "\n If the prompt ask about the timespan of a project, it is calculated as (TO_DAYS(MAX(work_hour.end_date)) - TO_DAYS(MIN(work_hour.start_date)))/30 using the TO_DAYS function in mysql and convert it to month" + "\n If the prompt ask about labor cost of a project for an indivial, it is calculated as the [work_hour.hour spent on project] / [work_hour.hour in total within the timespan] * [timespan in month] * [employee.salary of the person]. For labor cost of a project it is the labor cost of that project for each individuals summed across all person involved in the project.";
   const allStages = [
     {"English": "1. Bidding Stage", "中文": "1. 投标阶段"},
     {"English": "2. Design Stage","中文": "2. 设计阶段"},
@@ -36,7 +36,9 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [session_id, setSessionID] = useState('');
   const [stage, setStage] = useState([0])
-  const [language, setLanguage] = useState('English')
+  const [language, setLanguage] = useState('English');
+  const [popup2, setPopup2] = useState(false);
+  const [listProj, setListProj] = useState([]);
 
   function addResult(message, client=false) {
     setResult((prevresult)=>{return [{message: message, client: client}, ...prevresult]})
@@ -205,6 +207,77 @@ export default function Home() {
     }
   }
 
+  async function listReport() {
+    const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
+    try {
+      const reports = await fetch("http://"+IP+":8888/list", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${jwtToken}`
+          },
+        });
+      
+      if (reports.status === 401) {
+        alert({"English":"Log in expired, please re-login.", "中文":"登录过期，请重新登录。"}[language])
+        return '';
+      } else if (reports.status !== 200) {
+        alert({"English":"Failed to get the list of report.", "中文":"查询个人报告失败。"}[language])
+        return '';
+      } else {
+        const data = await reports.json();
+        if (data) { // Make sure data is not null or undefined
+          console.log(data);
+          data.sort((a,b)=>{return new Date(a.start_date) > new Date(b.start_date) ? -1 : 1})
+          setListProj(data);
+          setPopup2(true); // Only set to true if data is valid
+        }
+      }
+    } catch (error){
+      console.log(error)
+    }  
+  }
+
+  function renderlog() {
+    if (popup2) {
+      return (
+        <div className={styles.popup}>
+          <div style={{margin: 10, height: 'calc(100% - 10px)', width: 'calc(100% - 10px)', position: 'relative'}}>
+            <h3 style={{marginBottom: '10px'}}>{{"English":"My weekly report.", "中文":"我的周报"}[language]}</h3>
+            <div className={styles.close} onClick={()=>{setPopup2(false);}}>x</div>
+            {listProj && Array.isArray(listProj) ? listProj.map((v,i)=>{
+              return (<div key={i.toString()+"logs"} className={styles.log} onClick={async ()=>{
+                if (confirm({"English": 'Are you sure to delete this report?', "中文": '确定删除本条报告？'}[language])) {
+                  const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
+                  const response = await fetch("http://"+IP+":8888/delete", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({
+                      uuid : v.uuid
+                    })
+                  });
+                  if (response.status === 200) {
+                    await listReport();
+                  } else {
+                    alert({"English": 'Delete report failed.', "中文": '删除报告失败'}[language])
+                  }
+                }
+              }}>
+                {new Date(v.start_date).toLocaleDateString()} - {new Date(v.end_date).toLocaleDateString()}
+                <br/>{v.hour} {{"English": 'hours', "中文": '小时'}[language]} : {v.task_description}
+                {v.is_reversed ? (<div style={{color:'#905050'}}>{{"English": 'work reversed', "中文": '返工'}[language]}</div>): ''}
+                {!v.is_standardized ? (<div style={{color:'#905050'}}>{{"English": 'work not standardized', "中文": '不符合标准化流程'}[language]}</div>): ''}
+              </div>)
+            }) : ''}
+          </div>
+        </div>
+      )
+    }
+  }
+
   function renderpop() {
     if (inputPopup) {
       return (<div className={styles.popup}>
@@ -271,6 +344,7 @@ export default function Home() {
               setStandardizedDESC([...is_standardized_desc, ''])
             }
             }>{{"English":"Add another report", "中文": "新增一条报告"}[language]}</div>
+            <div className={styles.add} onClick={()=>{listReport();}}>{{"English":"Manage my reports", "中文": "管理我的报告"}[language]}</div>
             <div className={styles.close} onClick={()=>{setInputPopup(false);setInstruction('');}}>x</div>
             <div style={{whiteSpace:'pre-wrap'}}>{instruction}</div>
             <input type="submit" value={{"English":"Submit report", "中文":"提交工时报告"}[language]} />
@@ -533,7 +607,7 @@ export default function Home() {
         </form>
         {renderpop()}
         {renderLogin()}
-
+        {renderlog()}
       </main>
       
     </div>
