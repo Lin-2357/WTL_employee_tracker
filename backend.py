@@ -10,6 +10,8 @@ from sqlalchemy.ext.automap import automap_base
 import requests
 import uuid
 from datetime import datetime, timedelta
+import zoneinfo
+import tzlocal
 import pymysql
 
 app = Flask(__name__)
@@ -220,7 +222,7 @@ def login():
 def listReport():
     user_identity = json.loads(get_jwt_identity())
     employee_id = user_identity['employee_id']
-    full_query = "SELECT * FROM work_hour WHERE employee_id = :employee_id"
+    full_query = "SELECT work_hour.uuid AS uuid, name, task_description, hour, is_reversed, is_standardized, start_date, end_date FROM work_hour LEFT JOIN project ON project.uuid = work_hour.project_id WHERE work_hour.employee_id = :employee_id"
     try:
         result = db.session.execute(text(full_query), {"employee_id": employee_id})
         return jsonify([row._asdict() for row in result])
@@ -316,12 +318,19 @@ def add_report():
     user_identity = json.loads(get_jwt_identity())
     employee_id = user_identity['employee_id']
     role = user_identity['role']
+    dates = [int(x) for x in request.json.get('date').split("/")]
+    local_timezone = tzlocal.get_localzone()
+    local_timezone_key = local_timezone.key
+    local_tz = zoneinfo.ZoneInfo(local_timezone_key)
+    now = datetime.now()
+    end_date = datetime(dates[2], dates[0], dates[1], now.hour, now.minute, now.second, tzinfo=local_tz).date()
+    print(datetime(dates[2], dates[0], dates[1], now.hour, now.minute, now.second, tzinfo=local_tz))
     # User's query
     project_rep = request.json.get("Array_input")
     for i in range(len(project_rep)):
         project_rep[i]['employee_id'] = employee_id
-        project_rep[i]['end_date'] = datetime.today() - timedelta(days=1)
-        project_rep[i]['start_date'] = datetime.today() - timedelta(days=7)
+        project_rep[i]['end_date'] = end_date
+        project_rep[i]['start_date'] = end_date - timedelta(days=6)
         project_rep[i]['hour'] = float(project_rep[i]['hour'])
         project_rep[i]['uuid'] = str(uuid.uuid4())
         try:

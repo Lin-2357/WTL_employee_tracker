@@ -39,6 +39,7 @@ export default function Home() {
   const [language, setLanguage] = useState('English');
   const [popup2, setPopup2] = useState(false);
   const [listProj, setListProj] = useState([]);
+  const [reportDate, setReportDate] = useState(new Date(new Date() - new Date().getDay() * 86400000))
 
   function addResult(message, client=false) {
     setResult((prevresult)=>{return [{message: message, client: client}, ...prevresult]})
@@ -55,9 +56,9 @@ export default function Home() {
   async function generate(event) {
     event.preventDefault();
     addResult(animalInput, true);
-    addResult("Creating queries...")
+    addResult({'English':"Creating queries...", "中文":'正在分析问题...'}[language])
     if (!session_id) {
-      alert("please create session first.");
+      alert({'English':"please create session first.", '中文': '请先创建聊天'}[language]);
       return
     }
 
@@ -78,13 +79,13 @@ export default function Home() {
         },
       });
       if (from.status !== 200) {
-        addResult("Log in expired, please re-login.")
+        addResult({"English":"Log in expired, please re-login.", "中文":"登录过期，请重新登录。"}[language])
         return
       }
       const from_id = await from.json();
 
       if (!from_id.id) {
-        addResult("Log in expired, please re-login.")
+        addResult({"English":"Log in expired, please re-login.", "中文":"登录过期，请重新登录。"}[language])
         return
       }
 
@@ -103,7 +104,7 @@ export default function Home() {
       console.log(data)
 
       if (response.status === 400) {
-        alert("session expired, please reset your session.")
+        alert({'English':"session expired, please reset your session.", '中文': '聊天过期，请重置聊天'}[language]);
         return
       }
       else if (response.status !== 200 || (!data.result.sql_query) || (!data.result.sql_query.includes("SELECT"))) {
@@ -118,12 +119,12 @@ export default function Home() {
           
         data = await response.json();
         if (!data.result || (!data.result.includes("SELECT"))) {
-          addResult(data.result || "Query generation failed.")
+          addResult(data.result || {"English":"Query generation failed.", "中文": '无法回答该问题'}[language])
         }
       } else {
         data = {result: data.result.sql_query}
       }
-        addResult("loading data...");
+        addResult({'English':"loading data...", '中文':'正在载入数据...'}[language]);
 
         const dat = await fetch("http://"+IP+":8888/query", {
           method: "POST",
@@ -135,13 +136,13 @@ export default function Home() {
         });
 
         if (dat.status === 500) {
-          addResult("query execution unsuccessful.")
+          addResult({'English':"query execution unsuccessful.", '中文': '数据库处理出错'}[language])
           return
         } else if (dat.status === 400) {
-          addResult("AI model failed to generate a query.")
+          addResult({'English':"AI model failed to generate a query.", '中文': '未能成功在数据库中找到回答'}[language]);
           return
         } else if (dat.status === 401) {
-          addResult("Log in expired, please re-login.")
+          addResult({"English":"Log in expired, please re-login.", "中文":"登录过期，请重新登录。"}[language])
           return
         } else if (dat.status !== 200) {
           throw dat.error || new Error(`Request failed with status ${dat.status}`);
@@ -149,13 +150,13 @@ export default function Home() {
         const dat2 = await dat.json();
         console.log(dat2)
 
-        addResult("interpreting result...")
+        addResult({'English':"interpreting result...", '中文': '正在组织语言...'}[language])
         const interpretation = await fetch("http://"+IP+":4000/interpret", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ prompt: prt, response: displayObj(dat2) }),
+          body: JSON.stringify({ prompt: prt, response: displayObj(dat2), language: language }),
         });
         const out = await interpretation.json()
         addResult(out.result);
@@ -248,6 +249,7 @@ export default function Home() {
             {listProj && Array.isArray(listProj) ? listProj.map((v,i)=>{
               return (<div key={i.toString()+"logs"} className={styles.log} onClick={async ()=>{
                 if (confirm({"English": 'Are you sure to delete this report?', "中文": '确定删除本条报告？'}[language])) {
+                  console.log(v)
                   const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
                   const response = await fetch("http://"+IP+":8888/delete", {
                     method: "POST",
@@ -266,9 +268,11 @@ export default function Home() {
                   }
                 }
               }}>
-                {new Date(v.start_date).toLocaleDateString()} - {new Date(v.end_date).toLocaleDateString()}
+                {new Date(v.start_date).toISOString().slice(0, (new Date(v.start_date).toISOString()).indexOf('T'))} ~ {new Date(v.end_date).toISOString().slice(0, (new Date(v.end_date).toISOString()).indexOf('T'))}
+                <br/>
+                {v.name ? v.name : {'English':'No specific project.', '中文': '未在项目列表'}[language]}
                 <br/>{v.hour} {{"English": 'hours', "中文": '小时'}[language]} : {v.task_description}
-                {v.is_reversed ? (<div style={{color:'#905050'}}>{{"English": 'work reversed', "中文": '返工'}[language]}</div>): ''}
+                {v.is_reversed ? (<div style={{color:'#905050'}}>{{"English": 're-work required', "中文": '需要返工'}[language]}</div>): ''}
                 {!v.is_standardized ? (<div style={{color:'#905050'}}>{{"English": 'work not standardized', "中文": '不符合标准化流程'}[language]}</div>): ''}
               </div>)
             }) : ''}
@@ -298,7 +302,7 @@ export default function Home() {
                   "Content-Type": "application/json",
                   "Authorization": `Bearer ${jwtToken}`
                 },
-                body: JSON.stringify({ Array_input: arr }) // Example payload
+                body: JSON.stringify({ Array_input: arr, date: reportDate.toLocaleDateString() }) // Example payload
               });
             
               if (!response.ok) {
@@ -327,7 +331,7 @@ export default function Home() {
     
           }}>
             <h3 style={{marginBottom: '10px'}}>{{"English":"Make a weekly report.", "中文":"创建周报"}[language]}</h3>
-            <div style={{fontWeight: 700, marginBottom:5}}>{{"English": 'You are reporting for ', "中文": '周报日期：'}[language]}{new Date(Date.now()-7*86400000).getFullYear()}/{new Date(Date.now()-7*86400000).getMonth()+1}/{new Date(Date.now()-7*86400000).getDate()}-{new Date(new Date(Date.now()-86400000)).getFullYear()}/{new Date(Date.now()-86400000).getMonth()+1}/{new Date(Date.now()-86400000).getDate()}</div>
+            <div style={{fontWeight: 700, marginBottom:5}}>{{"English": 'You are reporting for ', "中文": '周报日期：'}[language]}{new Date(reportDate-7*86400000).getFullYear()}/{new Date(reportDate-7*86400000).getMonth()+1}/{new Date(reportDate-7*86400000).getDate()}-{reportDate.getFullYear()}/{reportDate.getMonth()+1}/{reportDate.getDate()}</div>
             {/*<textarea className={styles.textbox} style={{width: '95%'}} value={report} onChange={(e)=>{setReport(e.target.value)}} placeholder="type your report in text here, and click the green button to let AI fill in statistics for you."></textarea>
             <div className={styles.add} style={{marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}} onClick={()=>{populate()}}>Populate your statistics with AI</div>*/}
             {renderReport()}
@@ -418,7 +422,7 @@ export default function Home() {
           }
         }} className={styles.close} style={{position: 'relative', marginLeft: 'auto', backgroundColor: '#10a37f'}}>+</div>
       </div>
-      <span style={{margin: 10}}>{{"English":"Is your work reversed?", "中文": "是否返工"}[language]}</span> <input type="checkbox" value={is_reversed[i]} onChange={(e)=>{setReversed([...is_reversed.slice(0, i), e.target.checked , ...is_reversed.slice(i+1)])}}></input>
+      <span style={{margin: 10}}>{{"English":"Does your work require re-work?", "中文": "是否返工"}[language]}</span> <input type="checkbox" value={is_reversed[i]} onChange={(e)=>{setReversed([...is_reversed.slice(0, i), e.target.checked , ...is_reversed.slice(i+1)])}}></input>
       {is_reversed[i] ? <textarea
       className={styles.chatInput} style={{width: 'calc(100% - 60px)', marginLeft: '10px'}}
       name="re"
@@ -553,7 +557,6 @@ export default function Home() {
     }
 
   }
-
   return (
     <div>
       <Head>
