@@ -589,11 +589,19 @@ export default function Home() {
         const hours = (await res.json()).result;
         console.log(hours);
         var baseTime = {"English":"New session created, showing my last week work", "中文": "新的聊天已创建，以下是我的上周工时"}[language];
-        var totalHour = 0
+        var totalHour = 0;
+        var maxlen = 0;
         for (let i=0;i<hours.length;i++) {
-          baseTime += "\n" + hours[i].name + ": " + hours[i].hour + "h";
+          if (maxlen < hours[i].name.length) {
+            maxlen = hours[i].name.length;
+          }
+        }
+        baseTime += "\n" + "—".repeat(maxlen+6);
+        for (let i=0;i<hours.length;i++) {
+          baseTime += "\n" + hours[i].name + '—'.repeat(maxlen-hours[i].name.length) + " | " + hours[i].hour + "h";
           totalHour += parseFloat(hours[i].hour ? hours[i].hour : '0');
         }
+        baseTime += "\n" + "—".repeat(maxlen+6);
         setResult([{message: baseTime + {"English": "\n Total work hour: ", "中文":"\n共计工时："}[language] + totalHour.toString(), client: false}])
       }
 
