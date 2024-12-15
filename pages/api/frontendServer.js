@@ -96,6 +96,16 @@ app.post('/populate', async (req, res) => {
   }
 });
 
+app.post('/sendback', async (req, res) => {
+  fetch('http://'+IP+':8010/generate', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(req.body)
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });

@@ -9,6 +9,7 @@ function displayObj(obj) {
 export default function Home() {
 
   const IP = process.env.NEXT_PUBLIC_IP_ADDRESS;
+  const lastWeek = new Date(new Date() - new Date().getDay() * 86400000);
   const basePrompt = "\n INSTRUCTIONS: If the prompt ask about GS/ISS projects search from team name. If the prompt ask about subdepartment, query with group by (department, subdepartment). If the prompt ask about average work hour, it is average across all associated employee not report. If the prompt specifies time, filter from start_date in work_hour unless otherwise specified, for reference today's date is "+(new Date().toLocaleString()) + "\n If the prompt ask about the timespan of a project, it is calculated as (TO_DAYS(MAX(work_hour.end_date)) - TO_DAYS(MIN(work_hour.start_date)))/30 using the TO_DAYS function in mysql and convert it to month" + "\n If the prompt ask about labor cost of a project for an indivial, it is calculated as the [work_hour.hour spent on project] / [work_hour.hour in total within the timespan] * [timespan in month] * [employee.salary of the person]. For labor cost of a project it is the labor cost of that project for each individuals summed across all person involved in the project.";
   const allStages = [
     {"English": "1. Bidding Stage", "中文": "1. 投标阶段"},
@@ -48,7 +49,7 @@ export default function Home() {
   function renderResult() {
     return result.map(
       (v, i) => {
-        return <div key={i} style={{marginBottom: 15, padding: 10, marginLeft: (v.client ? 'auto': 0), width: '60%', backgroundColor: (v.client? "#10a37f" : "#bec0be"), borderRadius: '5px'}}>{v.message}</div>
+        return <div key={i} style={{whiteSpace: 'pre-wrap', marginBottom: 15, padding: 10, marginLeft: (v.client ? 'auto': 0), width: '60%', backgroundColor: (v.client? "#10a37f" : "#bec0be"), borderRadius: '5px'}}>{v.message}</div>
       }
     )
   }
@@ -148,7 +149,16 @@ export default function Home() {
           throw dat.error || new Error(`Request failed with status ${dat.status}`);
         }
         const dat2 = await dat.json();
+
         console.log(dat2)
+
+        // fetch("http://"+IP+":4000/sendback", {
+        //   method: "POST",
+        //   headers: {
+        //     "Content-Type": "application/json",
+        //   },
+        //   body: JSON.stringify({ result: dat2 }),
+        // });
 
         addResult({'English':"interpreting result...", '中文': '正在组织语言...'}[language])
         const interpretation = await fetch("http://"+IP+":4000/interpret", {
@@ -248,7 +258,7 @@ export default function Home() {
             <div className={styles.close} onClick={()=>{setPopup2(false);}}>x</div>
             {listProj && Array.isArray(listProj) ? listProj.map((v,i)=>{
               return (<div key={i.toString()+"logs"} className={styles.log} onClick={async ()=>{
-                if (confirm({"English": 'Are you sure to delete this report?', "中文": '确定删除本条报告？'}[language])) {
+                if (confirm({"English": 'Are you sure to delete this entry?', "中文": '确定删除本条工时记录？'}[language])) {
                   console.log(v)
                   const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
                   const response = await fetch("http://"+IP+":8888/delete", {
@@ -264,7 +274,7 @@ export default function Home() {
                   if (response.status === 200) {
                     await listReport();
                   } else {
-                    alert({"English": 'Delete report failed.', "中文": '删除报告失败'}[language])
+                    alert({"English": 'Delete failed.', "中文": '删除失败'}[language])
                   }
                 }
               }}>
@@ -287,11 +297,32 @@ export default function Home() {
       return (<div className={styles.popup}>
           <form style={{width: '100%', position:'relative'}} onSubmit={async(e)=>{
             e.preventDefault()
-            if (!confirm({"English": "Are you sure you want to submit?", "中文": "确认提交周报？"}[language])) {
+            const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
+            
+            const curr_work_hour = await fetch("http://"+IP+":8888/query", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${jwtToken}`
+              },
+              body: JSON.stringify({
+                query: "SELECT SUM(work_hour.hour) AS hour FROM work_hour JOIN employee ON employee.uuid = work_hour.employee_id JOIN project ON project.uuid = work_hour.project_id WHERE (employee.name LIKE '%" + username + "%' OR employee.alias LIKE '%" + username + "%') AND start_date >= '" + `${new Date(reportDate-7*86400000).getFullYear()}/${new Date(reportDate-7*86400000).getMonth()+1}/${new Date(reportDate-7*86400000).getDate()}';`
+               }) // Example payload
+            });
+            var alertMessage = '';
+            
+            if (curr_work_hour.status === 200) {
+              const totalH = (await curr_work_hour.json()).result[0];
+              console.log(totalH);
+              if (parseFloat(totalH.hour) >= 45) {
+                alertMessage = {"English": "You already have "+totalH.hour+" hours logged this week. ", "中文": "本周已经存在"+totalH.hour+"小时记录，"}[language]
+              }
+            }
+
+            if (!confirm(alertMessage + {"English": "Are you sure you want to submit?", "中文": "确认提交周报？"}[language])) {
               return
             }
             try {
-              const jwtToken = sessionStorage.getItem('jwtToken'); // Retrieve the token from session storage
               const arr = [];
               for (var i=0; i<project.length; i++) {
                 arr.push({project_id: project[i], hour: hours[i], is_standardized: is_standardized[i], is_reversed: is_reversed[i], description: keywords[i], stage:allStages[stage[i]]['中文']})
@@ -321,7 +352,7 @@ export default function Home() {
               setKeywords([""]);
               setProjectList([''])
               setStage([0]);
-              setInstruction({"English":"Report successfully sent, total work hours ", "中文":"周报提交成功，共计录入工时"}[language]+hours.reduce((accumulator, currentValue) => accumulator + currentValue, 0).toString());
+              setInstruction({"English":"Report successfully sent, total work hours ", "中文":"周报提交成功，共计录入工时"}[language]+hours.reduce((accumulator, currentValue) => parseFloat(accumulator) + parseFloat(currentValue), 0).toString());
               alert({"English":"Report successfully sent", "中文":"周报提交成功"}[language])
             } catch (error) {
               console.error("Error in POST request:", error.message);
@@ -347,7 +378,7 @@ export default function Home() {
               setReversedDESC([...is_reversed_desc, ''])
               setStandardizedDESC([...is_standardized_desc, ''])
             }
-            }>{{"English":"Add another report", "中文": "新增一条报告"}[language]}</div>
+            }>{{"English":"Add another entry", "中文": "新增一条工时记录"}[language]}</div>
             <div className={styles.add} onClick={()=>{listReport();}}>{{"English":"Manage my reports", "中文": "管理我的报告"}[language]}</div>
             <div className={styles.close} onClick={()=>{setInputPopup(false);setInstruction('');}}>x</div>
             <div style={{whiteSpace:'pre-wrap'}}>{instruction}</div>
@@ -455,7 +486,7 @@ export default function Home() {
       }></textarea> : ''}
       <div className={styles.add} style={{margin: 10, backgroundColor: '#905050'}} onClick={
         () => {
-          if (confirm({"English": 'Are you sure to delete this report?', "中文": '确定删除本条报告？'}[language])) {
+          if (confirm({"English": 'Are you sure to delete this entry?', "中文": '确定删除本条工时记录？'}[language])) {
             setHours([...hours.slice(0, i), ...hours.slice(i+1)])
             setProject([...project.slice(0, i), ...project.slice(i+1)])
             setReversed([...is_reversed.slice(0, i), ...is_reversed.slice(i+1)])
@@ -468,7 +499,7 @@ export default function Home() {
             setStandardizedDESC([...is_standardized_desc.slice(0,i), ...is_standardized_desc.slice(i+1)])
           }
         }
-      }>{{"English":"Delete this report", "中文": "删除本条报告"}[language]}</div>
+      }>{{"English":"Delete this entry", "中文": "删除本条工时记录"}[language]}</div>
       </div>
       )
     )
@@ -543,7 +574,29 @@ export default function Home() {
     const uuid = await dat.json();
     if (uuid.session_id) {
       setSessionID(uuid.session_id);
-      setResult([{message: {"English":"New session created.", "中文": "新的聊天已创建"}[language], client: false}])
+      const res = await fetch("http://"+IP+":8888/query", {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${sessionStorage.getItem('jwtToken')}`
+        },
+        body: JSON.stringify({
+          query: "SELECT project.name AS name, work_hour.hour AS hour FROM work_hour JOIN employee ON employee.uuid = work_hour.employee_id JOIN project ON project.uuid = work_hour.project_id WHERE (employee.name LIKE '%" + username + "%' OR employee.alias LIKE '%" + username + "%') AND start_date >= '" + `${new Date(lastWeek-7*86400000).getFullYear()}/${new Date(lastWeek-7*86400000).getMonth()+1}/${new Date(lastWeek-7*86400000).getDate()}';`
+        })
+      }
+      );
+      if (res.status === 200) {
+        const hours = (await res.json()).result;
+        console.log(hours);
+        var baseTime = {"English":"New session created, showing my last week work", "中文": "新的聊天已创建，以下是我的上周工时"}[language];
+        var totalHour = 0
+        for (let i=0;i<hours.length;i++) {
+          baseTime += "\n" + hours[i].name + ": " + hours[i].hour + "h";
+          totalHour += parseFloat(hours[i].hour ? hours[i].hour : '0');
+        }
+        setResult([{message: baseTime + {"English": "\n Total work hour: ", "中文":"\n共计工时："}[language] + totalHour.toString(), client: false}])
+      }
+
     }
   }
 

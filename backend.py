@@ -265,7 +265,7 @@ def execute_query():
     # Execute the query securely
     try: 
         result = db.session.execute(text(full_query), {"employee_id": employee_id})
-        return jsonify([row._asdict() for row in result])
+        return jsonify({'result': [row._asdict() for row in result], 'from_user_security_level': role})
     except Exception as _:
         print(_)
         return "query execution failed", 500
