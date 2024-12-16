@@ -40,7 +40,8 @@ export default function Home() {
   const [language, setLanguage] = useState('English');
   const [popup2, setPopup2] = useState(false);
   const [listProj, setListProj] = useState([]);
-  const [reportDate, setReportDate] = useState(new Date(new Date() - new Date().getDay() * 86400000))
+  const [reportDate, setReportDate] = useState(new Date(new Date() - new Date().getDay() * 86400000));
+  const [realUsername, setRealUsername] = useState('');
 
   function addResult(message, client=false) {
     setResult((prevresult)=>{return [{message: message, client: client}, ...prevresult]})
@@ -325,7 +326,7 @@ export default function Home() {
             try {
               const arr = [];
               for (var i=0; i<project.length; i++) {
-                arr.push({project_id: project[i], hour: hours[i], is_standardized: is_standardized[i], is_reversed: is_reversed[i], description: keywords[i], stage:allStages[stage[i]]['中文']})
+                arr.push({project_id: project[i], hour: hours[i], is_standardized: !is_standardized[i], is_reversed: is_reversed[i], description: keywords[i], stage:allStages[stage[i]]['中文']})
               }
               const response = await fetch("http://"+IP+":8888/report", {
                 method: "POST",
@@ -333,7 +334,7 @@ export default function Home() {
                   "Content-Type": "application/json",
                   "Authorization": `Bearer ${jwtToken}`
                 },
-                body: JSON.stringify({ Array_input: arr, date: reportDate.toLocaleDateString('en-US') }) // Example payload
+                body: JSON.stringify({ Array_input: arr, date: `${reportDate.getFullYear()}/${reportDate.getMonth()+1}/${reportDate.getDate()}` }) // Example payload
               });
             
               if (!response.ok) {
@@ -362,7 +363,7 @@ export default function Home() {
     
           }}>
             <h3 style={{marginBottom: '10px'}}>{{"English":"Make a weekly report.", "中文":"创建周报"}[language]}</h3>
-            <div style={{fontWeight: 700, marginBottom:5}}>{{"English": 'You are reporting for ', "中文": '周报日期：'}[language]}{new Date(reportDate-7*86400000).getFullYear()}/{new Date(reportDate-7*86400000).getMonth()+1}/{new Date(reportDate-7*86400000).getDate()}-{reportDate.getFullYear()}/{reportDate.getMonth()+1}/{reportDate.getDate()}</div>
+            <div style={{fontWeight: 700, marginBottom:5}}>{{"English": 'You are reporting for ', "中文": '周报日期：'}[language]}{new Date(reportDate-6*86400000).getFullYear()}/{new Date(reportDate-6*86400000).getMonth()+1}/{new Date(reportDate-6*86400000).getDate()}-{reportDate.getFullYear()}/{reportDate.getMonth()+1}/{reportDate.getDate()}</div>
             {/*<textarea className={styles.textbox} style={{width: '95%'}} value={report} onChange={(e)=>{setReport(e.target.value)}} placeholder="type your report in text here, and click the green button to let AI fill in statistics for you."></textarea>
             <div className={styles.add} style={{marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}} onClick={()=>{populate()}}>Populate your statistics with AI</div>*/}
             {renderReport()}
@@ -468,7 +469,7 @@ export default function Home() {
           e.target.style.height = (e.target.scrollHeight - 24) + "px";
         }
       }></textarea> : ''}
-      <span style={{margin: 10}}>{{"English":"Is your work standardized?", "中文": "是否符合标准化"}[language]}</span> <input type="checkbox" value={is_standardized[i]} onChange={(e)=>{setStandardized([...is_standardized.slice(0, i), e.target.checked , ...is_standardized.slice(i+1)])}}></input>
+      <span style={{margin: 10}}>{{"English":"Is your work NOT standardized?", "中文": "不符合标准化"}[language]}</span> <input type="checkbox" value={is_standardized[i]} onChange={(e)=>{setStandardized([...is_standardized.slice(0, i), e.target.checked , ...is_standardized.slice(i+1)])}}></input>
       {is_standardized[i] ? <textarea
       className={styles.chatInput} style={{width: 'calc(100% - 60px)', marginLeft: '10px'}}
       name="st"
@@ -517,7 +518,8 @@ export default function Home() {
       sessionStorage.setItem('jwtToken', data.access_token);
       await resetSession()
       addResult({"English":"Log in successful", "中文": "登录成功"}[language]) // Return the JWT token
-      setPopup(false)
+      setRealUsername(username);
+      setPopup(false);
     } else if (response.status === 401) {
       alert({"English": "invalid username or password. Please try again.", "中文": "未知的用户名/密码，请重试。"}[language])
     }
@@ -614,7 +616,7 @@ export default function Home() {
     if (!jwtToken) {
       return ""
     } else {
-      return username.substring(0, 1).toUpperCase()
+      return realUsername.substring(0, 1).toUpperCase()
     }
 
   }
@@ -630,7 +632,30 @@ export default function Home() {
           <div className={styles.titlebar}><span className={styles.language} style={{fontSize: '34px', border: 'none'}}>{{"English": 'Employee Report', "中文":"员工周报"}[language]}</span><img src="/squid.png" className={styles.icon} />
             <div className={styles.language} style={{backgroundColor: (language=="中文"? "#10a37f":"#fff")}} onClick={(e)=>{setLanguage("中文")}}>中文</div>
             <div className={styles.language} style={{backgroundColor: (language=="English"? "#10a37f":"#fff")}} onClick={(e)=>{setLanguage("English")}}>English</div></div>
-          <div className={styles.loginbutton} onClick={(e)=>setPopup(true)}>{getUsername()}</div>
+          <div className={styles.loginbutton} onClick={
+            async (e)=>{
+              const jwtToken = sessionStorage.getItem('jwtToken');
+              const from = await fetch("http://"+IP+":8888/validate", {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${jwtToken}` // Add the token to the Authorization header
+                },
+              });
+              if (from.status !== 200) {
+                sessionStorage.setItem('jwtToken', '');
+                setRealUsername('');
+                alert({"English":"Log in expired, please re-login.", "中文":"登录过期，请重新登录。"}[language])
+                setPopup(true);
+              } else {
+                if (confirm({"English":"Do you want to log-out?", "中文":"确认是否登出？"}[language])) {
+                  sessionStorage.setItem('jwtToken', '');
+                  setRealUsername('');
+                  setPopup(true);
+                }
+              }
+            }
+          }>{getUsername()}</div>
           <div className={styles.loginbutton} style={{left:0, width: 'fit-content', padding:'0 10px 0 10px', borderRadius:'10px'}} onClick={()=>{
             if (getUsername()) {
               setInputPopup(true);

@@ -319,12 +319,13 @@ def add_report():
     employee_id = user_identity['employee_id']
     role = user_identity['role']
     dates = [int(x) for x in request.json.get('date').split("/")]
+    print(dates)
     local_timezone = tzlocal.get_localzone()
     local_timezone_key = local_timezone.key
     local_tz = zoneinfo.ZoneInfo(local_timezone_key)
     now = datetime.now()
-    end_date = datetime(dates[2], dates[0], dates[1], now.hour, now.minute, now.second, tzinfo=local_tz).date()
-    print(datetime(dates[2], dates[0], dates[1], now.hour, now.minute, now.second, tzinfo=local_tz))
+    end_date = datetime(dates[0], dates[1], dates[2], now.hour, now.minute, now.second, tzinfo=local_tz).date()
+    print(datetime(dates[0], dates[1], dates[2], now.hour, now.minute, now.second, tzinfo=local_tz))
     # User's query
     project_rep = request.json.get("Array_input")
     for i in range(len(project_rep)):
