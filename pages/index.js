@@ -333,7 +333,7 @@ export default function Home() {
                   "Content-Type": "application/json",
                   "Authorization": `Bearer ${jwtToken}`
                 },
-                body: JSON.stringify({ Array_input: arr, date: reportDate.toLocaleDateString() }) // Example payload
+                body: JSON.stringify({ Array_input: arr, date: reportDate.toLocaleDateString('en-US') }) // Example payload
               });
             
               if (!response.ok) {
