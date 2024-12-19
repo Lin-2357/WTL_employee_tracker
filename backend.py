@@ -107,7 +107,7 @@ query_masks = {
         ),
         team AS (
             SELECT * FROM team
-            WHERE team_id IN (
+            WHERE uuid IN (
                 SELECT team_id FROM team_assignment
             )
         ),
@@ -148,7 +148,7 @@ query_masks = {
         ),
         team AS (
             SELECT * FROM team
-            WHERE team_id IN (
+            WHERE uuid IN (
                 SELECT team_id FROM team_assignment
             )
         ),
@@ -183,7 +183,7 @@ query_masks = {
         ),
         team AS (
             SELECT * FROM team
-            WHERE team_id IN (
+            WHERE uuid IN (
                 SELECT team_id FROM team_assignment
             )
         ),
