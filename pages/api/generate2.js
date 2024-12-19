@@ -1,6 +1,6 @@
 const { Configuration, OpenAIApi } = require("openai");
 require('dotenv').config();
-const apiKey = process.env.LLM_API_KEY;
+const apiKey = process.env.OPENAI_API_KEY;
 
 const configuration = new Configuration({
   apiKey: apiKey,

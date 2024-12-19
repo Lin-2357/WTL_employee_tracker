@@ -44,3 +44,24 @@ __pycache__/
 
 # SQLite database (if you don't want to track it in version control)
 *.sqlite3
+venv
+.env.local
+
+chess-plus/venv/
+chess-plus/.env
+chess-plus/results/
+chess-plus/data/
+chess-plus/src/__pycache__/
+chess-plus/.DS_Store
+chess-plus/*.pyc
+chess-plus/__pycache__/
+chess-plus/*.log
+chess-plus/back_up.txt
+chess-plus/logs/
+chess-plus/wtl-chess*.json
+chess-plus/bin/
+chess-plus/include/
+chess-plus/lib/
+chess-plus/lib64
+chess-plus/pyvenv.cfg
+chess-plus/share/
