@@ -1,0 +1,3 @@
+[submodule "chess-plus"]
+	path = chess-plus
+	url = https://github.com/noincent/chess-plus.git
