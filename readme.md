@@ -21,19 +21,46 @@ This project combines features from two repositories to provide an enhanced syst
     ```
 
 2. Set up the environment:
-    - Configure `.env` for API keys and database paths.
-    - Install dependencies using:
+    - **Create a `.env` file** in the root directory with your configuration:
+        ```bash
+        DATA_MODE="dev"
+        DATA_PATH="./data/dev/dev.json"
+        DB_ROOT_DIRECTORY="./data/dev/dev_databases"
+        DATA_TABLES_PATH="./data/dev/dev_tables.json"
+        INDEX_SERVER_HOST='localhost'
+        INDEX_SERVER_PORT=12345
+        CHESS_IP_ADDRESS='localhost'
+        OPENAI_API_KEY=
+        GCP_PROJECT=''
+        GCP_REGION='us-central1'
+        GCP_CREDENTIALS=''
+        GOOGLE_CLOUD_PROJECT=''
+        ```
+    - **Create a `.env.local` file** in the root directory with your configuration:
+        ```bash
+        NEXT_PUBLIC_IP_ADDRESS='your_ip_address'
+        ```
+    - **Install dependencies** (using a virtual environment is recommended) using:
       ```bash
       pip install -r requirements.txt
       ```
+    - **Install frontend**
+      ```bash
+      npm install
+      ```
 
-3. Preprocess databases and start the backend:
+3. Start the backend:
     ```bash
-    sh chess-plus/run/run_preprocess.sh
-    python backend.py
+    python3 chess-plus/web_interface.py
+    python3 backend.py
+    node pages/api/frontendServer.js    
     ```
 
-4. Use the integrated chat interface or SQL synthesis tools to execute queries.
+4. Use the integrated chat interface access database:
+    ```bash
+    npm run dev
+    ```
+    the website will be running at `http://localhost:3001`
 
 ## Attribution
 This project builds on the CHESS framework for efficient SQL synthesis. If used in research, please cite both this repository and the original CHESS paper:
