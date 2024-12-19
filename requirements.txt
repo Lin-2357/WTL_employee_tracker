@@ -2,10 +2,8 @@ Flask==2.3.2
 Flask-JWT-Extended==4.4.4
 Flask-SQLAlchemy==3.0.5
 Flask-Cors==3.0.10
-SQLAlchemy==2.0.21
-bcrypt==4.0.1
-python-dotenv==1.0.0
-requests==2.31.0
+bcrypt==4.2.0
+python-dotenv==1.0.1
 pymysql==1.1.0
 tzlocal==5.0.1
 aiohappyeyeballs==2.4.3
@@ -21,7 +19,6 @@ async-timeout==4.0.3
 attrs==24.2.0
 backcall==0.2.0
 backoff==2.2.1
-bcrypt==4.2.0
 beautifulsoup4==4.12.3
 bleach==6.2.0
 build==1.2.2.post1
@@ -188,7 +185,6 @@ PyPika==0.48.9
 pyproject_hooks==1.2.0
 pytest==8.3.3
 python-dateutil==2.9.0.post0
-python-dotenv==1.0.1
 python-multipart==0.0.9
 pytz==2024.2
 PyYAML==6.0.2
