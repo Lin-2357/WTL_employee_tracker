@@ -24,22 +24,22 @@ This project combines features from two repositories to provide an enhanced syst
     - **Create a `.env` file** in the root directory with your configuration:
         ```bash
         DATA_MODE=dev
-        DATA_PATH=./data/dev/dev.json
-        DB_ROOT_DIRECTORY=./data/dev/dev_databases
-        DATA_TABLES_PATH=./data/dev/dev_tables.json
+        DATA_PATH="./data/dev/dev.json"
+        DB_ROOT_DIRECTORY="./data/dev/dev_databases"
+        DATA_TABLES_PATH="./data/dev/dev_tables.json"
         INDEX_SERVER_HOST=localhost
         INDEX_SERVER_PORT=12345
         CHESS_IP_ADDRESS=localhost
         OPENAI_API_KEY=
         GCP_PROJECT=
-        GCP_REGION=us-central1
+        GCP_REGION="us-central1"
         GCP_CREDENTIALS=
         GOOGLE_CLOUD_PROJECT=
         DB_PASSWORD=
         ```
     - **Create a `.env.local` file** in the root directory with your configuration:
         ```bash
-        NEXT_PUBLIC_IP_ADDRESS=
+        NEXT_PUBLIC_IP_ADDRESS=localhost
         ```
     - **Install dependencies** (using a virtual environment is recommended) using:
       ```bash
