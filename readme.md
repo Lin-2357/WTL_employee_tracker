@@ -48,15 +48,43 @@ This project combines features from two repositories to provide an enhanced syst
       ```bash
       npm install
       ```
-
-3. Start the backend:
+3. **MySQL Database Setup:**
+    - **Install MySQL:** If you don't have MySQL installed, follow the instructions for your operating system to install it.
+    - **Create the `wtl_employee_tracker` database:**
+        - Log in to your MySQL server using a client like the MySQL command-line tool or a GUI tool like MySQL Workbench.
+        - Execute the following SQL command to create the database:
+        ```sql
+        CREATE DATABASE wtl_employee_tracker;
+        ```
+    - **Import the SQL dump:**
+        - You will be provided with a SQL dump file (e.g., `wtl_employee_tracker.sql`).
+        - Use the following command to import the SQL dump into the `wtl_employee_tracker` database:
+        ```bash
+        mysql -u root -p wtl_employee_tracker < wtl_employee_tracker.sql
+        ```
+        (Replace `wtl_employee_tracker.sql` with the actual name of your SQL dump file. You might need to adjust the username and password if you are not using the root user.)
+    - **Configure the database connection in `backend.py`:**
+        - Ensure that the `SQLALCHEMY_DATABASE_URI` in your `backend.py` file is correctly configured to connect to your MySQL database. The default configuration is:
+        ```python
+        app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://root:%40Ljy20020910@localhost/wtl_employee_tracker"
+        ```
+        - **Important:**
+            - Replace `root` with your MySQL username if it's different.
+            - Replace `%40Ljy20020910` with your MySQL password. Note that special characters like `@` need to be URL-encoded (e.g., `@` becomes `%40`).
+            - If your MySQL server is not running on `localhost`, update the hostname accordingly.
+            - If your MySQL server is running on a non-default port, update the port accordingly.
+        - **Example with a different user and password:**
+        ```python
+        app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://myuser:mypassword@192.168.1.100/wtl_employee_tracker"
+        ```
+4. Start the backend:
     ```bash
     python3 chess-plus/web_interface.py
     python3 backend.py
     node pages/api/frontendServer.js    
     ```
 
-4. Use the integrated chat interface access database:
+5. Use the integrated chat interface access database:
     ```bash
     npm run dev
     ```
