@@ -35,6 +35,7 @@ This project combines features from two repositories to provide an enhanced syst
         GCP_REGION=us-central1
         GCP_CREDENTIALS=
         GOOGLE_CLOUD_PROJECT=
+        DB_PASSWORD=
         ```
     - **Create a `.env.local` file** in the root directory with your configuration:
         ```bash

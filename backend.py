@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 import zoneinfo
 import tzlocal
 import pymysql
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
@@ -20,8 +21,9 @@ CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "A
 
 # SQLite database configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
+pwd = os.getenv("DB_PASSWORD")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://root:%40Ljy20020910@localhost/wtl_employee_tracker"  # Change to SQLite
+app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://root:{pwd}@localhost/mooc_contest_database"  # Change to SQLite
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'dkhfkasdhkjvhxcvhueh439erd7fy87awye79yr79'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=3)
