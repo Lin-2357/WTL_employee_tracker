@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "set PORT=3001 && next dev",
-    "build": "set PORT=3001 && next build",
-    "start": "set PORT=3001 && next start"
+    "dev": "cross-env PORT=3001 next dev",
+    "build": "cross-env PORT=3001 next build",
+    "start": "cross-env PORT=3001 next start"
   },
   "dependencies": {
     "body-parser": "^1.20.2",
