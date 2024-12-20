@@ -2,6 +2,8 @@
 
 This project combines features from two repositories to provide an enhanced system for SQL synthesis with interactive query capabilities. The integration includes a Flask-based backend for managing databases and executing queries, as well as advanced SQL synthesis functionality based on CHESS (Contextual Harnessing for Efficient SQL Synthesis).
 
+This project only works on Linux system due to LLM library usage.
+
 ## Features
 - **SQL Generation**: Generate SQL queries based on natural language inputs.
 - **Interactive Chat**: Engage in conversational query sessions, maintaining context across multiple queries.
