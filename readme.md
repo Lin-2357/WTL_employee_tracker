@@ -87,14 +87,17 @@ This project only works on Linux system due to LLM library usage.
         ```
     - **Import the SQL dump:**
         ```bash
-        mysql -u root -p wtl_employee_tracker < wtl_employee_tracker.sql
+        mysql -u root -p wtl_employee_tracker < mooc.sql
         ```
     - **Configure database connection** in `backend.py`:
         ```python
         app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://root:{pwd}@localhost/wtl_employee_tracker"
         ```
 
-6. Start the application (requires 4 terminal windows, all in the project root directory):
+6. Add labor cost calculation built in function.
+    - Open MySQL CLI, seletect the database, and run the code from `labor-cost.txt`
+
+7. Start the application (requires 4 terminal windows, all in the project root directory):
 
     Terminal 1 - Backend server:
     ```bash
