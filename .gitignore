@@ -65,3 +65,10 @@ chess-plus/lib/
 chess-plus/lib64
 chess-plus/pyvenv.cfg
 chess-plus/share/
+
+#next stuff
+.next
+
+#env
+mooc_test
+
