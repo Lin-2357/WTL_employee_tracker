@@ -2,6 +2,8 @@
 
 This project combines features from two repositories to provide an enhanced system for SQL synthesis with interactive query capabilities. The integration includes a Flask-based backend for managing databases and executing queries, as well as advanced SQL synthesis functionality based on CHESS (Contextual Harnessing for Efficient SQL Synthesis).
 
+This project only works on Linux system due to LLM library usage.
+
 ## Features
 - **SQL Generation**: Generate SQL queries based on natural language inputs.
 - **Interactive Chat**: Engage in conversational query sessions, maintaining context across multiple queries.
@@ -85,14 +87,17 @@ This project combines features from two repositories to provide an enhanced syst
         ```
     - **Import the SQL dump:**
         ```bash
-        mysql -u root -p wtl_employee_tracker < wtl_employee_tracker.sql
+        mysql -u root -p wtl_employee_tracker < mooc.sql
         ```
     - **Configure database connection** in `backend.py`:
         ```python
         app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://root:{pwd}@localhost/wtl_employee_tracker"
         ```
 
-6. Start the application (requires 4 terminal windows, all in the project root directory):
+6. Add labor cost calculation built in function.
+    - Open MySQL CLI, seletect the database, and run the code from `labor-cost.txt`
+
+7. Start the application (requires 4 terminal windows, all in the project root directory):
 
     Terminal 1 - Backend server:
     ```bash
